@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FPVue Alpha 0.12</string>
+    <string name="app_name">FPVue Alpha 0.13</string>
     <string-array name="channels">
         <item>1</item>
         <item>2</item>
