@@ -1,0 +1,15 @@
+<resources>
+
+    <style name="MyStyleFullscreen" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:immersive">true</item>
+    </style>
+
+    <style name="MyLightToolbarStyle" parent="@style/Widget.AppCompat.Spinner.DropDown">
+        <item name="android:textColor">@color/colorWhite</item>
+    </style>
+
+</resources>
