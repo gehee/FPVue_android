@@ -8,3 +8,6 @@ FPVue Android is an app packaging multiple pieces together to decode an H264/H26
 
 The wfb-ng key is embedded in the app for now. 
 You can download [gs.key](https://github.com/gehee/FPVue_android/raw/main/app/src/main/assets/gs.key) from this repository and copy it on the air side.
+
+Supported rtl8812au wifi adapter are listed [here](https://github.com/gehee/FPVue_android/blob/main/app/src/main/res/xml/usb_device_filter.xml).
+Feel free to send pull requests to add new supported wifi adapters hardware IDs.
