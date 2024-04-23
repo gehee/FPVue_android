@@ -11,3 +11,17 @@ You can download [gs.key](https://github.com/gehee/FPVue_android/raw/main/app/sr
 
 Supported rtl8812au wifi adapter are listed [here](https://github.com/gehee/FPVue_android/blob/main/app/src/main/res/xml/usb_device_filter.xml).
 Feel free to send pull requests to add new supported wifi adapters hardware IDs.
+
+## Compatibility
+
+- arm64-v8a android devices (including Meta Quest 2/3, non vr mode)
+
+## Build
+
+This project can be open in android studio and built from there.
+
+## Installation instructions
+
+1- Download apk from https://github.com/gehee/FPVue_android/releases.
+2- Run `adb install FPVue_android_0.13.apk` from the command line.
+3- Download [gs.key](https://github.com/gehee/FPVue_android/raw/main/app/src/main/assets/gs.key) and copy it on the air side.
