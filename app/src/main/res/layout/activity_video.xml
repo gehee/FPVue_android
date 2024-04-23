@@ -73,7 +73,7 @@
             android:id="@+id/spinner"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="160dp"
+            android:layout_marginEnd="170dp"
             android:backgroundTint="#FFFFFF"
             android:entries="@array/channels"
             app:layout_constraintBottom_toBottomOf="parent"
