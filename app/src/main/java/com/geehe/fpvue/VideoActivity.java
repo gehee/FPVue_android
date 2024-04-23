@@ -1,5 +1,6 @@
 package com.geehe.fpvue;
 
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -55,6 +56,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     static String TAG = "com.geehe.fpvue";
 
+    private static String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     BroadcastReceiver detachReceiver;
 
     static UsbDevice lastUsbDevice;
@@ -81,20 +83,19 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
         detachReceiver = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) {
-                if(Objects.equals(intent.getAction(), UsbManager.ACTION_USB_DEVICE_DETACHED)) {
+                if (Objects.equals(intent.getAction(), UsbManager.ACTION_USB_DEVICE_DETACHED)) {
                     Log.d(TAG, "usb detached " + VideoActivity.this);
                     if (link != null) {
                         link.Stop();
                     }
                     binding.tvMessage.setVisibility(View.VISIBLE);
-                    binding.tvMessage.setText( "Wifi adapter detached.");
-                } else if(Objects.equals(intent.getAction(), UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
+                    binding.tvMessage.setText("Wifi adapter detached.");
+                } else if (Objects.equals(intent.getAction(), UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
                     Log.d(TAG, "usb attached" + VideoActivity.this);
                     StartWfbNg();
                 }
             }
         };
-
 
         // Set the intent filter for the broadcast receiver, and register.
         IntentFilter filter = new IntentFilter();
@@ -176,6 +177,16 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     public void StartWfbNg(){
         SharedPreferences sharedPref =this.getPreferences(Context.MODE_PRIVATE);
+
+        UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        if (!usbManager.hasPermission(lastUsbDevice)) {
+            binding.tvMessage.setVisibility(View.VISIBLE);
+            binding.tvMessage.setText("No permission for USB.");
+            PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
+            usbManager.requestPermission(lastUsbDevice, usbPermissionIntent);
+            return;
+        }
+
         int wifiChannel = sharedPref.getInt("wifi-channel", 11);
         if (wifiChannel < 0) {
             binding.tvMessage.setVisibility(View.VISIBLE);
@@ -191,7 +202,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         binding.tvMessage.setText( "Starting wfb-ng on channel " + wifiChannel+ ".");
 
        try {
-           link = new WfbNgLink(VideoActivity.this, (UsbManager) getSystemService(Context.USB_SERVICE), lastUsbDevice.getDeviceName());
+           link = new WfbNgLink(VideoActivity.this, usbManager , lastUsbDevice.getDeviceName());
            Log.d(TAG, "wfb-ng link started.");
            link.SetWfbNGStatsChanged(VideoActivity.this);
            Thread thread = new Thread() {
