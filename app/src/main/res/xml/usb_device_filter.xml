@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <usb-device vendor-id="0B05" product-id="17D2" /> <!-- Asus USB-AC56 -->
+    <usb-device vendor-id="0BDA" product-id="8812" /> <!-- generic rtl 8812 au? -->
+    <usb-device vendor-id="0BDA" product-id="881a" /> <!-- RTL8812AU-VS -->
+</resources>
