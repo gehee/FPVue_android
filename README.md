@@ -22,6 +22,6 @@ This project can be open in android studio and built from there.
 
 ## Installation instructions
 
-1 - Download apk from https://github.com/gehee/FPVue_android/releases.
-2 - Run `adb install FPVue_android_0.14.apk` from the command line.
-3 - Download [gs.key](https://github.com/gehee/FPVue_android/raw/main/app/src/main/assets/gs.key), rename it to drone.key and copy it on the air side.
+1. Download apk from https://github.com/gehee/FPVue_android/releases.
+2. Run `adb install FPVue_android_0.14.apk` from the command line.
+3. Download [gs.key](https://github.com/gehee/FPVue_android/raw/main/app/src/main/assets/gs.key), rename it to drone.key and copy it on the air side.
