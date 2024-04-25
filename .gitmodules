@@ -5,6 +5,6 @@
 
 [submodule "app/wfbngrtl8812/src/main/cpp/wfb-ng"]
 	path = app/wfbngrtl8812/src/main/cpp/wfb-ng
-	url = https://github.com/gehee/wfb-ng.git
+	url = https://github.com/svpcom/wfb-ng.git
 	branch = master
 
