@@ -6,5 +6,5 @@
 [submodule "app/wfbngrtl8812/src/main/cpp/wfb-ng"]
 	path = app/wfbngrtl8812/src/main/cpp/wfb-ng
 	url = https://github.com/gehee/wfb-ng.git
-	branch = android-compat
+	branch = master
 
