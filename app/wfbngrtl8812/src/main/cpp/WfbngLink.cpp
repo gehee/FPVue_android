@@ -6,6 +6,7 @@
 #include <iostream>
 #include <span>
 #include <cstdint>
+#include <initializer_list>
 
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
@@ -77,36 +78,44 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
 
     // Config
     // TODO(geehe) Get that form the android UI.
-    int client_port = 5600;
+    int video_client_port = 5600;
+    int mavlink_client_port = 14550;
     std::string client_addr = "127.0.0.1";
     uint32_t link_id = 7669206 ; // sha1 hash of link_domain="default"
-    uint8_t radio_port = 0;
+    uint8_t video_radio_port = 0;
+    uint8_t mavlink_radio_port = 0x10;
     uint64_t epoch = 0;
 
-    uint32_t channel_id_f = (link_id << 8) + radio_port;
-    uint32_t channel_id_be = htobe32(channel_id_f);
-    uint8_t* channel_id_be8 = reinterpret_cast<uint8_t *>(&channel_id_be);
+    uint32_t video_channel_id_f = (link_id << 8) + video_radio_port;
+    uint32_t video_channel_id_be = htobe32(video_channel_id_f);
+    uint8_t* video_channel_id_be8 = reinterpret_cast<uint8_t *>(&video_channel_id_be);
 
-    __android_log_print(ANDROID_LOG_ERROR, TAG,
-                        "filtering packets with link_id=%d(%s)",
-                        link_id,
-                        uint8_to_hex_string(channel_id_be8,4).c_str());
+    uint32_t mavlink_channel_id_f = (link_id << 8) + mavlink_radio_port;
+    uint32_t mavlink_channel_id_be = htobe32(mavlink_channel_id_f);
+    uint8_t* mavlink_channel_id_be8 = reinterpret_cast<uint8_t *>(&mavlink_channel_id_be);
 
     try {
-        Aggregator agg(client_addr, client_port, keyPath, epoch, channel_id_f);
-        aggregator = &agg;
+        Aggregator video_agg(client_addr, video_client_port, keyPath, epoch, video_channel_id_f);
+        aggregator = &video_agg;
+        Aggregator mavlink_agg(client_addr, mavlink_client_port, keyPath, epoch, mavlink_channel_id_f);
+        aggregator = &mavlink_agg;
 
-        auto packetProcessor = [&agg, channel_id_be8 ](const Packet &packet) {
+        auto packetProcessor = [&video_agg, video_channel_id_be8, &mavlink_agg, mavlink_channel_id_be8 ](const Packet &packet) {
             RxFrame frame(packet.Data);
-            if (!frame.IsValidWfbFrame() || !frame.MatchesChannelID(channel_id_be8)) {
+            if (!frame.IsValidWfbFrame()) {
                 return;
             }
             int8_t rssi[4] = {1,1,1,1};
             uint32_t freq = 0;
             int8_t noise[4] = {1,1,1,1};
             uint8_t antenna[4] = {1,1,1,1};
-            agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, NULL);
-        };
+            if (frame.MatchesChannelID(video_channel_id_be8)) {
+                video_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, NULL);
+            } else if (frame.MatchesChannelID(mavlink_channel_id_be8)) {
+                __android_log_print(ANDROID_LOG_DEBUG, TAG, "MAVLINK packet: %zu", packet.Data.size());
+                mavlink_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, NULL);
+            }
+           };
         rtlDevice->Init(packetProcessor, SelectedChannel{
                 .Channel = static_cast<uint8_t>(wifiChannel),
                 .ChannelOffset = 0,
