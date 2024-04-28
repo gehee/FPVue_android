@@ -238,10 +238,10 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     @Override
     public void onDecodingInfoChanged(final DecodingInfo decodingInfo) {
         mDecodingInfo=decodingInfo;
-        binding.tvMessage.setVisibility(View.INVISIBLE);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                binding.tvMessage.setVisibility(View.INVISIBLE);
                 if (decodingInfo.currentKiloBitsPerSecond > 1000) {
                     binding.tvVideoInfo.setText(String.format("%dx%d   %.0f fps   %.2f MB/s   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond/1000, decodingInfo.avgTotalDecodingTime_ms));
                 } else {
