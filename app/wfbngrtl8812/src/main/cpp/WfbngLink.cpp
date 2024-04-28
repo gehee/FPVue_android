@@ -105,6 +105,7 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
             if (!frame.IsValidWfbFrame()) {
                 return;
             }
+            // TODO(geehe) Get data from libusb?
             int8_t rssi[4] = {1,1,1,1};
             uint32_t freq = 0;
             int8_t noise[4] = {1,1,1,1};
@@ -112,7 +113,6 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
             if (frame.MatchesChannelID(video_channel_id_be8)) {
                 video_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, NULL);
             } else if (frame.MatchesChannelID(mavlink_channel_id_be8)) {
-                __android_log_print(ANDROID_LOG_DEBUG, TAG, "MAVLINK packet: %zu", packet.Data.size());
                 mavlink_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, NULL);
             }
            };

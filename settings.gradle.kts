@@ -23,3 +23,4 @@ rootProject.name = "FPVue"
 include(":app")
 include(":app:videonative")
 include(":app:wfbngrtl8812")
+include(":app:mavlink")

@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.material)
     implementation(project(":app:wfbngrtl8812"))
     implementation(libs.ui.graphics.android)
+    implementation(project(":app:mavlink"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

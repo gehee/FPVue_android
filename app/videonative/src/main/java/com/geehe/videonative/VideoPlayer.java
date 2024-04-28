@@ -175,7 +175,7 @@ public class VideoPlayer implements IVideoParamsChanged{
     public static native boolean anyVideoBytesParsedSinceLastCall(long nativeInstance);
     public static native boolean receivingVideoButCannotParse(long nativeInstance);
 
-    //TODO: Use message queue from cpp for performance#
+    // TODO: Use message queue from cpp for performance#
     // This initiates a 'call back' for the IVideoParams
     public static native <T extends IVideoParamsChanged> void nativeCallBack(T t, long nativeInstance);
 
