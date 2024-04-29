@@ -66,7 +66,6 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
 
     Logger_t log;
     WiFiDriver wifi_driver(log);
-    //WiFiDriver wifi_driver;
     rtlDevice = wifi_driver.CreateRtlDevice(dev_handle);
     if (!rtlDevice) {
         __android_log_print(ANDROID_LOG_DEBUG, TAG,
@@ -98,7 +97,6 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
         Aggregator video_agg(client_addr, video_client_port, keyPath, epoch, video_channel_id_f);
         aggregator = &video_agg;
         Aggregator mavlink_agg(client_addr, mavlink_client_port, keyPath, epoch, mavlink_channel_id_f);
-        aggregator = &mavlink_agg;
 
         auto packetProcessor = [&video_agg, video_channel_id_be8, &mavlink_agg, mavlink_channel_id_be8 ](const Packet &packet) {
             RxFrame frame(packet.Data);
@@ -205,5 +203,5 @@ Java_com_geehe_wfbngrtl8812_WfbNgLink_nativeCallBack(JNIEnv *env, jclass clazz, 
         return;
     }
     env->CallVoidMethod(wfbStatChangedI,onStatsChanged,stats);
-    // aggregator->reset_stats();
+    aggregator->clear_stats();
 }

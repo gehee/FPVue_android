@@ -20,7 +20,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.geehe.fpvue.databinding.ActivityVideoBinding;
@@ -123,7 +122,9 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     protected void onStop() {
         MavlinkNative.nativeStop(this);
-        unregisterReceiver(usbReceiver);
+        try {
+            unregisterReceiver(usbReceiver);
+        } catch(java.lang.IllegalArgumentException ignored) {}
         Log.d(TAG, "onStop");
         StopWfbNg();
         super.onStop();
@@ -255,10 +256,6 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
-    private int count_p_dec_err = 0;
-    private int count_p_lost = 0;
-    private int count_p_fec_recovered = 0;
-    private int count_p_outgoing = 0;
     @Override
     public void onWfbNgStatsChanged(WfbNGStats data) {
         binding.tvMessage.setVisibility(View.INVISIBLE);
@@ -267,22 +264,18 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             @Override
             public void run() {
                 if (data.count_p_all > 0) {
-                    int perr = data.count_p_dec_err - count_p_dec_err;
+                    int perr = data.count_p_dec_err;
                     if (perr > 0) {
                         binding.tvWFBNGStatus.setText("Waiting for session key.");
                     } else {
                         binding.tvWFBNGStatus.setText(String.format("lost=%d\t\trec=%d\t\tok=%d",
-                                data.count_p_lost - count_p_lost,
-                                data.count_p_fec_recovered - count_p_fec_recovered,
-                                data.count_p_outgoing - count_p_outgoing));
+                                data.count_p_lost,
+                                data.count_p_fec_recovered ,
+                                data.count_p_outgoing));
                     }
                 } else {
                     binding.tvWFBNGStatus.setText("No wfb-ng data.");
                 }
-                count_p_dec_err = data.count_p_dec_err;
-                count_p_lost = data.count_p_lost;
-                count_p_fec_recovered = data.count_p_fec_recovered;
-                count_p_outgoing = data.count_p_outgoing;
             }
         });
     }
