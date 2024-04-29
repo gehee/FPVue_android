@@ -38,8 +38,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 
 import me.saket.cascade.CascadePopupMenuCheckable;
 
@@ -56,7 +58,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     private static final String ACTION_USB_PERMISSION = "com.geehe.fpvue.USB_PERMISSION";
 
     BroadcastReceiver usbReceiver;
-    static UsbDevice lastUsbDevice;
+    List<UsbDevice> activeWifiAdapters = new Vector<UsbDevice>();
     WfbNgLink wfbLink;
     Thread wfbThread;
     boolean permissionRefused = false;
@@ -161,14 +163,23 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         usbReceiver = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) { 
                 synchronized (this) {
-                    StopWfbNg();
                     if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction())) {
                         Log.d(TAG, "usb detached.");
                         binding.tvMessage.setVisibility(View.VISIBLE);
                         binding.tvMessage.setText("Wifi adapter detached.");
+                        UsbDevice detachedDevice = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                        if (detachedDevice == null ){
+                            return;
+                        }
+                        activeWifiAdapters.removeIf(usbDevice -> usbDevice.getDeviceName().equals(detachedDevice.getDeviceName()));
+                        if (activeWifiAdapters.isEmpty()) {
+                            StopWfbNg();
+                        }
                     } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(intent.getAction())) {
+                        StopWfbNg();
                         Log.d(TAG, "usb attached.");
                     } else if (ACTION_USB_PERMISSION.equals(intent.getAction())) {
+                        StopWfbNg();
                         permissionRefused = !intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
                     }
                 }
@@ -260,51 +271,47 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             binding.tvMessage.setText("No channel selected.");
             return;
         }
-        if (lastUsbDevice == null) {
-            UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-            HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
-            for (UsbDevice usbDevice : deviceList.values()) {
-                lastUsbDevice = usbDevice;
-                Log.d(TAG, "Found adapter" + lastUsbDevice.getDeviceName());
-            }
+        activeWifiAdapters.clear();
+        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        for (UsbDevice usbDevice : deviceList.values()) {
+            activeWifiAdapters.add(usbDevice);
+            Log.d(TAG, "Found adapter" + usbDevice.getDeviceName());
         }
-        if (lastUsbDevice == null) {
+        if (activeWifiAdapters.isEmpty()) {
             binding.tvMessage.setVisibility(View.VISIBLE);
             binding.tvMessage.setText( "No compatible wifi adapter found.");
             return ;
         }
 
         UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        if (!usbManager.hasPermission(lastUsbDevice)) {
-            binding.tvMessage.setVisibility(View.VISIBLE);
-            binding.tvMessage.setText("No permission for wifi adapter.");
-            PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
-            if (!permissionRefused) {
-                usbManager.requestPermission(lastUsbDevice, usbPermissionIntent);
+        for (UsbDevice dev : activeWifiAdapters) {
+            if (!usbManager.hasPermission(dev)) {
+                binding.tvMessage.setVisibility(View.VISIBLE);
+                binding.tvMessage.setText("No permission for wifi adapter.");
+                PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
+                if (!permissionRefused) {
+                    usbManager.requestPermission(dev, usbPermissionIntent);
+                }
+                return;
             }
-            return;
         }
 
         binding.tvMessage.setVisibility(View.VISIBLE);
         binding.tvMessage.setText( "Starting wfb-ng on channel " + wifiChannel+ ".");
 
-        try {
-            wfbLink = new WfbNgLink(VideoActivity.this, usbManager, lastUsbDevice.getDeviceName());
-            Log.d(TAG, "wfb-ng link started.");
-            wfbLink.SetWfbNGStatsChanged(VideoActivity.this);
-            activeChannel = wifiChannel;
-            wfbThread = new Thread() {
-                @Override
-                public void run() {
-                    wfbLink.Run(wifiChannel);
-                    Log.d(TAG, "wfb-ng link stopped.");
-                }
-            };
-            wfbThread.start();
-        } catch (NullPointerException e) {
-            Log.d(TAG, "Adapter unplugged.");
-            binding.tvMessage.setText("Adapter unplugged.");
-        }
+        wfbLink = new WfbNgLink(VideoActivity.this, usbManager, activeWifiAdapters);
+        Log.d(TAG, "wfb-ng link started.");
+        wfbLink.SetWfbNGStatsChanged(VideoActivity.this);
+        activeChannel = wifiChannel;
+        wfbThread = new Thread() {
+            @Override
+            public void run() {
+                wfbLink.Run(wifiChannel);
+                Log.d(TAG, "wfb-ng link stopped.");
+            }
+        };
+        wfbThread.start();
     }
 
     public synchronized void StopWfbNg() {

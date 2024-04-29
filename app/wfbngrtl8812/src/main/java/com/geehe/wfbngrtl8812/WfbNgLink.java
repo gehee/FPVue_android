@@ -9,6 +9,8 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -23,25 +25,27 @@ public class WfbNgLink implements WfbNGStatsChanged{
     private final long nativeWfbngLink;
 
     private UsbManager usbManager;
-    private String usbDevicePath;
-    private int usbDeviceFileDescriptor;
+    private List<UsbDevice> usbDevices;
+    private List<Integer> usbDeviceFileDescriptors = new ArrayList<>();
     private Timer timer;
     private WfbNGStatsChanged statsChanged;
     private final Context context;
 
-    public WfbNgLink(final AppCompatActivity parent, UsbManager usbManager, String usbDevicePath) {
+    public WfbNgLink(final AppCompatActivity parent, UsbManager usbManager, List<UsbDevice> usbDevices) {
         this.context=parent;
         this.usbManager = usbManager;
-        this.usbDevicePath = usbDevicePath;
-        Log.d(TAG, "Getting usb device " + usbDevicePath);
-        UsbDevice usbDevice = usbManager.getDeviceList().get(usbDevicePath);
-        UsbDeviceConnection usbDeviceConnection = usbManager.openDevice(usbDevice);
-        usbDeviceFileDescriptor = usbDeviceConnection.getFileDescriptor();
-        nativeWfbngLink = nativeInitialize(context, usbDeviceFileDescriptor);
+        this.usbDevices = usbDevices;
+        for (UsbDevice usbDevice : usbDevices) {
+            UsbDeviceConnection usbDeviceConnection = usbManager.openDevice(usbDevice);
+            usbDeviceFileDescriptors.add(usbDeviceConnection.getFileDescriptor());
+        }
+        nativeWfbngLink = nativeInitialize(context, usbDeviceFileDescriptors);
     }
 
     public void Run(int wifiChannel) {
-        Log.d(TAG, "wfb-ng monitoring on " + usbDevicePath + "("+usbDeviceFileDescriptor+") using wifi channel "+wifiChannel);
+        for (UsbDevice usbDevice : usbDevices) {
+            Log.d(TAG, "wfb-ng monitoring on " + usbDevice.getDeviceName() + " using wifi channel " + wifiChannel);
+        }
         timer=new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -72,7 +76,7 @@ public class WfbNgLink implements WfbNGStatsChanged{
     }
 
     // Native cpp methods.
-    public static native long nativeInitialize(Context context, int fd);
+    public static native long nativeInitialize(Context context, List<Integer> fd);
     public static native void nativeRun(long nativeInstance, Context context, int wifiChannel);
     public static native void nativeStop(long nativeInstance, Context context);
     public static native <T extends WfbNGStatsChanged> void nativeCallBack(T t, long nativeInstance);

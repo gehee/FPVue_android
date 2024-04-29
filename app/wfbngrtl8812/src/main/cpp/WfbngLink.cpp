@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <span>
+#include <list>
 #include <cstdint>
 #include <initializer_list>
 
@@ -20,6 +21,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <thread>
 
 #define TAG "com.geehe.fpvue"
 
@@ -32,48 +34,48 @@ std::string uint8_to_hex_string(const uint8_t *v, const size_t s) {
     return ss.str();
 }
 
-WfbngLink::WfbngLink(JNIEnv* env, jobject context, jint fd): fd(fd), aggregator(nullptr) {}
+WfbngLink::WfbngLink(JNIEnv* env, jobject context, std::list<int> fds): aggregator(nullptr), deviceDescriptors(fds) {}
 
 int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
     int r;
     libusb_context *ctx = NULL;
 
     r = libusb_set_option(NULL, LIBUSB_OPTION_NO_DEVICE_DISCOVERY);
-    __android_log_print(ANDROID_LOG_DEBUG, TAG,
-                        "libusb_set_option LIBUSB_OPTION_NO_DEVICE_DISCOVERY: %d", r);
 
     r = libusb_init(&ctx);
     if (r < 0) {
         return r;
     }
 
-    struct libusb_device_handle *dev_handle;
-    r = libusb_wrap_sys_device(ctx, (intptr_t) fd, &dev_handle);
-    __android_log_print(ANDROID_LOG_DEBUG, TAG, "libusb_wrap_sys_device: %d", r);
-    if (r < 0) {
-        libusb_exit(ctx);
-        return r;
+    // Open adapters
+    for (int fd : deviceDescriptors) {
+        struct libusb_device_handle *dev_handle;
+        r = libusb_wrap_sys_device(ctx, (intptr_t) fd, &dev_handle);
+        if (r < 0) {
+            libusb_exit(ctx);
+            return r;
+        }
+        devHandles.push_back(dev_handle);
+
+        /*Check if kernel driver attached*/
+        if (libusb_kernel_driver_active(dev_handle, 0)) {
+            r = libusb_detach_kernel_driver(dev_handle, 0); // detach driver
+            __android_log_print(ANDROID_LOG_DEBUG, TAG, "libusb_detach_kernel_driver: %d", r);
+
+        }
+        r = libusb_claim_interface(dev_handle, 0);
+
+        Logger_t log;
+        WiFiDriver wifi_driver(log);
+        rtlDevices.push_back(wifi_driver.CreateRtlDevice(dev_handle));
+        if (!rtlDevices.end()->get()) {
+            __android_log_print(ANDROID_LOG_DEBUG, TAG, "CreateRtlDevice error");
+        } else {
+
+            __android_log_print(ANDROID_LOG_DEBUG, TAG, "CreateRtlDevice success");
+        }
     }
 
-    /*Check if kenel driver attached*/
-    if (libusb_kernel_driver_active(dev_handle, 0)) {
-        r = libusb_detach_kernel_driver(dev_handle, 0); // detach driver
-        __android_log_print(ANDROID_LOG_DEBUG, TAG, "libusb_detach_kernel_driver: %d", r);
-
-    }
-    r = libusb_claim_interface(dev_handle, 0);
-    __android_log_print(ANDROID_LOG_DEBUG, TAG, "libusb_claim_interface: %d", r);
-
-    Logger_t log;
-    WiFiDriver wifi_driver(log);
-    rtlDevice = wifi_driver.CreateRtlDevice(dev_handle);
-    if (!rtlDevice) {
-        __android_log_print(ANDROID_LOG_DEBUG, TAG,
-                            "CreateRtlDevice error");
-    } else {
-        __android_log_print(ANDROID_LOG_DEBUG, TAG,
-                            "CreateRtlDevice success");
-    }
 
     // Config
     // TODO(geehe) Get that form the android UI.
@@ -98,7 +100,8 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
         aggregator = &video_agg;
         Aggregator mavlink_agg(client_addr, mavlink_client_port, keyPath, epoch, mavlink_channel_id_f);
 
-        auto packetProcessor = [&video_agg, video_channel_id_be8, &mavlink_agg, mavlink_channel_id_be8 ](const Packet &packet) {
+        std::mutex mtx; // Define a mutex
+        auto packetProcessor = [&video_agg, video_channel_id_be8, &mavlink_agg, mavlink_channel_id_be8, &mtx](const Packet &packet) {
             RxFrame frame(packet.Data);
             if (!frame.IsValidWfbFrame()) {
                 return;
@@ -108,17 +111,27 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
             uint32_t freq = 0;
             int8_t noise[4] = {1,1,1,1};
             uint8_t antenna[4] = {1,1,1,1};
+
+            std::lock_guard<std::mutex> lock(mtx);
             if (frame.MatchesChannelID(video_channel_id_be8)) {
                 video_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, 0, 0, NULL);
             } else if (frame.MatchesChannelID(mavlink_channel_id_be8)) {
                 mavlink_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, 0, 0, NULL);
             }
-           };
-        rtlDevice->Init(packetProcessor, SelectedChannel{
-                .Channel = static_cast<uint8_t>(wifiChannel),
-                .ChannelOffset = 0,
-                .ChannelWidth = CHANNEL_WIDTH_20,
-        });
+        };
+        std::vector<std::thread> threads;
+        for (auto it = rtlDevices.begin(); it != rtlDevices.end(); ++it) {
+            threads.push_back(std::thread([it, packetProcessor,wifiChannel](){
+                it->get()->Init(packetProcessor, SelectedChannel{
+                        .Channel = static_cast<uint8_t>(wifiChannel),
+                        .ChannelOffset = 0,
+                        .ChannelWidth = CHANNEL_WIDTH_20,
+                });
+            }));
+        }
+        for (auto& t : threads) {
+            t.join();
+        }
     } catch (const std::runtime_error& error) {
         __android_log_print(ANDROID_LOG_ERROR, TAG,
                             "runtime_error: %s", error.what());
@@ -127,8 +140,10 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
 
     __android_log_print(ANDROID_LOG_DEBUG, TAG, "Init done, releasing...");
 
-    r = libusb_release_interface(dev_handle, 0);
-    __android_log_print(ANDROID_LOG_DEBUG, TAG, "libusb_release_interface: %d", r);
+    for (auto it = devHandles.begin(); it != devHandles.end(); ++it) {
+        r = libusb_release_interface(*it, 0);
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "libusb_release_interface: %d", r);
+    }
 
     libusb_exit(ctx);
 
@@ -136,9 +151,9 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
 }
 
 void WfbngLink::stop(JNIEnv* env, jobject context) {
-    if (rtlDevice) {
+    for (auto it = rtlDevices.begin(); it != rtlDevices.end(); ++it) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Stopping rtlDevice");
-        rtlDevice->should_stop = true;
+        it->get()->should_stop = true;
     }
 }
 
@@ -151,11 +166,39 @@ inline WfbngLink *native(jlong ptr) {
     return reinterpret_cast<WfbngLink *>(ptr);
 }
 
+inline std::list<int> toList(JNIEnv *env, jobject list) {
+    // Get the class and method IDs for java.util.List and its methods
+    jclass listClass = env->GetObjectClass(list);
+    jmethodID sizeMethod = env->GetMethodID(listClass, "size", "()I");
+    jmethodID getMethod = env->GetMethodID(listClass, "get", "(I)Ljava/lang/Object;");
+    // Method ID to get int value from Integer object
+    jclass integerClass = env->FindClass("java/lang/Integer");
+    jmethodID intValueMethod = env->GetMethodID(integerClass, "intValue", "()I");
+
+    // Get the size of the list
+    jint size = env->CallIntMethod(list, sizeMethod);
+
+    // Create a C++ list to store the elements
+    std::list<int> res;
+
+    // Iterate over the list and add elements to the C++ list
+    for (int i = 0; i < size; ++i) {
+        // Get the element at index i
+        jobject element = env->CallObjectMethod(list, getMethod, i);
+        // Convert the element to int
+        jint value = env->CallIntMethod(element, intValueMethod);
+        // Add the element to the C++ list
+        res.push_back(value);
+    }
+
+    return res;
+}
+
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_geehe_wfbngrtl8812_WfbNgLink_nativeInitialize(JNIEnv *env, jclass clazz,
-                                                        jobject context, jint fd) {
-    auto* p= new WfbngLink(env, context, fd);
+                                                        jobject context, jobject fds) {
+    auto* p= new WfbngLink(env, context, toList(env, fds));
     return jptr(p);
 }
 
