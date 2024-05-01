@@ -78,14 +78,14 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         surfaceView.getHolder().addCallback(videoPlayer.configure1());
 
         // Setup mavlink
-        MavlinkNative.nativeStart(this);
-        mavlinkTimer=new Timer();
-        mavlinkTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                MavlinkNative.nativeCallBack(VideoActivity.this);
-            }
-        },0,1000);
+       MavlinkNative.nativeStart(this);
+       mavlinkTimer=new Timer();
+       mavlinkTimer.schedule(new TimerTask() {
+           @Override
+           public void run() {
+               MavlinkNative.nativeCallBack(VideoActivity.this);
+           }
+       },0,1000);
 
         // Build channel selector
         binding.spinner.setOnItemSelectedListener(this);
@@ -244,9 +244,9 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             public void run() {
                 binding.tvMessage.setVisibility(View.INVISIBLE);
                 if (decodingInfo.currentKiloBitsPerSecond > 1000) {
-                    binding.tvVideoInfo.setText(String.format("%dx%d   %.0f fps   %.2f MB/s   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond/1000, decodingInfo.avgTotalDecodingTime_ms));
+                    binding.tvVideoInfo.setText(String.format("%dx%d   %.0f fps   %.2f Mbps   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond/1000, decodingInfo.avgTotalDecodingTime_ms));
                 } else {
-                    binding.tvVideoInfo.setText(String.format("%dx%d   %.0f fps   %.1f KB/s   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond, decodingInfo.avgTotalDecodingTime_ms));
+                    binding.tvVideoInfo.setText(String.format("%dx%d   %.0f fps   %.1f Kbps   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond, decodingInfo.avgTotalDecodingTime_ms));
                 }
             }
         });
@@ -335,8 +335,8 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             @Override
             public void run() {
                 binding.tvTelembattery.setText(formatDouble(data.telemetryBattery/1000.0,"V", ""));
-                binding.tvTelemCurr.setText(formatFloat(data.telemetryCurrent,"A",""));
-                binding.tvTelemCurrCons.setText(formatFloat(data.telemetryCurrentConsumed,"A",""));
+                binding.tvTelemCurr.setText(formatDouble(data.telemetryCurrent/1000.0,"A",""));
+                binding.tvTelemCurrCons.setText(formatDouble(data.telemetryCurrentConsumed/1000.0,"A",""));
                 binding.tvTelemAltitude.setText(formatFloat(data.telemetryAltitude,"m","ALT:"));
                 binding.tvTelemDistance.setText(formatDouble(data.telemetryDistance,"m","DST:"));
                 binding.tvTelemgspeed.setText(formatFloat(data.telemetryGspeed,"m/s","GSPD:"));

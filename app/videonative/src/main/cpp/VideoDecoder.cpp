@@ -110,10 +110,9 @@ void VideoDecoder::configureStartDecoder(){
 
     AMediaFormat* format=AMediaFormat_new();
     AMediaFormat_setString(format,AMEDIAFORMAT_KEY_MIME,MIME.c_str());
-    // Only for android 31
-//    AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_LATENCY, 1);
-//    // MediaCodec supports two priorities: 0 - realtime, 1 - best effort
-//    AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_PRIORITY, 0);
+    AMediaFormat_setInt32(format, "low-latency", 1);
+    // MediaCodec supports two priorities: 0 - realtime, 1 - best effort
+    AMediaFormat_setInt32(format, "priority", 0);
     if(IS_H265){
         h265_configureAMediaFormat(mKeyFrameFinder,format);
     }else{
