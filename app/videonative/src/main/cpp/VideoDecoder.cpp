@@ -63,10 +63,10 @@ void VideoDecoder::registerOnDecodingInfoChangedCallback(DECODING_INFO_CHANGED_C
 }
 
 void VideoDecoder::interpretNALU(const NALU& nalu){
-    //return;
     // TODO: RN switching between h264 / h265 requires re-setting the surface
     if(decoder.configured){
         assert(nalu.IS_H265_PACKET==IS_H265);
+       //decoder.configured = nalu.IS_H265_PACKET==IS_H265;
     }
     IS_H265=nalu.IS_H265_PACKET;
     //we need this lock, since the receiving/parsing/feeding does not run on the same thread who sets the input surface
@@ -110,9 +110,13 @@ void VideoDecoder::configureStartDecoder(){
 
     AMediaFormat* format=AMediaFormat_new();
     AMediaFormat_setString(format,AMEDIAFORMAT_KEY_MIME,MIME.c_str());
-    AMediaFormat_setInt32(format, "low-latency", 1);
-    // MediaCodec supports two priorities: 0 - realtime, 1 - best effort
-    AMediaFormat_setInt32(format, "priority", 0);
+//    AMediaFormat_setInt32(format, "low-latency", 1);
+//    AMediaFormat_setInt32(format, "vendor.low-latency.enable", 1);
+//    AMediaFormat_setInt32(format, "vendor.qti-ext-dec-low-latency.enable", 1);
+//    AMediaFormat_setInt32(format, "vendor.hisi-ext-low-latency-video-dec.video-scene-for-low-latency-req", 1);
+//    AMediaFormat_setInt32(format, "vendor.rtc-ext-dec-low-latency.enable", 1);
+//    MediaCodec supports two priorities: 0 - realtime, 1 - best effort
+//    AMediaFormat_setInt32(format, "priority", 0);
     if(IS_H265){
         h265_configureAMediaFormat(mKeyFrameFinder,format);
     }else{
@@ -121,11 +125,39 @@ void VideoDecoder::configureStartDecoder(){
 
     MLOGD << "Configuring decoder:" << AMediaFormat_toString(format);
 
-    AMediaCodec_configure(decoder.codec,format, decoder.window, nullptr, 0);
+    auto status = AMediaCodec_configure(decoder.codec, format, decoder.window, nullptr, 0);
     AMediaFormat_delete(format);
-    format=AMediaCodec_getOutputFormat(decoder.codec);
-    //MLOGD<<"Output format"<<AMediaFormat_toString(format);
-    AMediaFormat_delete(format);
+
+    switch (status) {
+        case AMEDIA_OK: {
+            MLOGD<<"AMediaCodec_configure: OK";
+            break;
+        }
+        case AMEDIA_ERROR_UNKNOWN: {
+            MLOGD<<"AMediaCodec_configure: AMEDIA_ERROR_UNKNOWN";
+            break;
+        }
+        case AMEDIA_ERROR_MALFORMED: {
+            MLOGD<<"AMediaCodec_configure: AMEDIA_ERROR_MALFORMED";
+            break;
+        }
+        case AMEDIA_ERROR_UNSUPPORTED: {
+            MLOGD<<"AMediaCodec_configure: AMEDIA_ERROR_UNSUPPORTED";
+            break;
+        }
+        case AMEDIA_ERROR_INVALID_OBJECT: {
+            MLOGD<<"AMediaCodec_configure: AMEDIA_ERROR_INVALID_OBJECT";
+            break;
+        }
+        case AMEDIA_ERROR_INVALID_PARAMETER: {
+            MLOGD<<"AMediaCodec_configure: AMEDIA_ERROR_INVALID_PARAMETER";
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
 
     if (decoder.codec== nullptr) {
         MLOGD<<"Cannot configure decoder";
@@ -141,7 +173,7 @@ void VideoDecoder::configureStartDecoder(){
 
 
 void VideoDecoder::feedDecoder(const NALU& nalu){
-    if(IS_H265 && (nalu.isSPS() || nalu.isPPS() || nalu.isVPS())){
+    if(IS_H265 && (nalu.isSPS()  || nalu.isPPS() || nalu.isVPS())){
         // looks like h265 doesn't like feeding sps/pps/vps during decoding
         // it could also be that they have to be merged together, but for now just skip them
         return;
@@ -162,9 +194,9 @@ void VideoDecoder::feedDecoder(const NALU& nalu){
             std::memcpy(buf, nalu.getData(),(size_t)nalu.getSize());
             //this timestamp will be later used to calculate the decoding latency
             const uint64_t presentationTimeUS=(uint64_t)duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
-            //Doing so causes garbage bug TODO investigate
-            //const auto flag=nalu.isPPS() || nalu.isSPS() ? AMEDIACODEC_BUFFER_FLAG_CODEC_CONFIG : 0;
-            //AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, (size_t)nalu.data_length,presentationTimeUS, flag);
+//            Doing so causes garbage bug TODO investigate
+//            const auto flag=nalu.isPPS() || nalu.isSPS() ? AMEDIACODEC_BUFFER_FLAG_CODEC_CONFIG : 0;
+//            AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, (size_t)nalu.getSize(),presentationTimeUS, flag);
             AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, (size_t)nalu.getSize(),presentationTimeUS,0);
             waitForInputB.add(steady_clock::now() - now);
             parsingTime.add(deltaParsing);

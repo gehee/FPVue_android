@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -41,12 +42,12 @@ public class VideoPlayer implements IVideoParamsChanged{
 
     private void setVideoSurface(final @Nullable Surface surface){
         verifyApplicationThread();
-        nativeSetVideoSurface(nativeVideoPlayer,surface);
+        nativeSetVideoSurface(nativeVideoPlayer, surface);
     }
 
-    private void start(){
+    public void start(String codec){
         verifyApplicationThread();
-        nativeStart(nativeVideoPlayer,context);
+        nativeStart(nativeVideoPlayer,context, codec);
         //The timer initiates the callback(s), but if no data has changed they are not called (and the timer does almost no work)
         //TODO: proper queue, but how to do synchronization in java ndk ?!
         timer=new Timer();
@@ -58,11 +59,14 @@ public class VideoPlayer implements IVideoParamsChanged{
         },0,200);
     }
 
-    private void stop(){
+    public void stop(){
+        if (timer == null) {
+            return;
+        }
         verifyApplicationThread();
         timer.cancel();
         timer.purge();
-        nativeStop(nativeVideoPlayer,context);
+        nativeStop(nativeVideoPlayer, context);
     }
 
     /**
@@ -75,7 +79,6 @@ public class VideoPlayer implements IVideoParamsChanged{
      */
     public void addAndStartDecoderReceiver(Surface surface){
         setVideoSurface(surface);
-        start();
     }
 
     /**
@@ -100,7 +103,9 @@ public class VideoPlayer implements IVideoParamsChanged{
                 addAndStartDecoderReceiver(holder.getSurface());
             }
             @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) { }
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+            }
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
                 stopAndRemoveReceiverDecoder();
@@ -165,9 +170,9 @@ public class VideoPlayer implements IVideoParamsChanged{
     public static native long nativeInitialize(Context context);
     public static native void nativeFinalize(long nativeVideoPlayer);
 
-    public static native void nativeStart(long nativeInstance,Context context);
+    public static native void nativeStart(long nativeInstance,Context context, String codec);
     public static native void nativeStop(long nativeInstance,Context context);
-    public static native void nativeSetVideoSurface(long nativeInstance,Surface surface);
+    public static native void nativeSetVideoSurface(long nativeInstance, Surface surface);
 
     //get members or other information. Some might be only usable in between (nativeStart <-> nativeStop)
     public static native String getVideoInfoString(long nativeInstance);

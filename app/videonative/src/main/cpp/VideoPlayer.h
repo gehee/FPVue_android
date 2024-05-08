@@ -23,7 +23,7 @@ public:
     /*
      * Start the receiver and ground recorder if enabled
      */
-    void start(JNIEnv *env,jobject androidContext);
+    void start(JNIEnv *env,jobject androidContext, jstring codec);
     /**
      * Stop the receiver and ground recorder if enabled
      */

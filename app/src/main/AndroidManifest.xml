@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk android:minSdkVersion="28"
+    <uses-sdk
+        android:minSdkVersion="28"
         android:targetSdkVersion="33" />
 
     <uses-feature android:name="android.hardware.usb.host" />
@@ -25,13 +26,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FPVue">
-
-        <activity android:name=".VideoActivity"
-            android:screenOrientation="sensorLandscape"
+        <activity
+            android:name=".VideoActivity"
             android:exported="true"
             android:theme="@style/MyStyleFullscreen"
-            android:launchMode="singleInstance">
-
+            android:launchMode="singleInstance"
+            android:screenOrientation="sensorLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -42,7 +42,6 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/usb_device_filter" />
         </activity>
-
     </application>
 
 </manifest>

@@ -26,11 +26,12 @@ VideoPlayer::VideoPlayer(JNIEnv* env, jobject context) :
 
 //Not yet parsed bit stream (e.g. raw h264 or rtp data)
 void VideoPlayer::onNewVideoData(const uint8_t* data, const std::size_t data_length,const VIDEO_DATA_TYPE videoDataType){
+
     //MLOGD << "onNewVideoData " << data_length;
     switch(videoDataType){
         case VIDEO_DATA_TYPE::RTP_H264:
             // MLOGD << "onNewVideoData RTP_H264 " << data_length;
-            // mParser.parse_rtp_h264_stream(data,data_length);
+            mParser.parse_rtp_h264_stream(data,data_length);
             break;
         case VIDEO_DATA_TYPE::RAW_H264:
             // mParser.parse_raw_h264_stream(data,data_length);
@@ -150,11 +151,13 @@ void VideoPlayer::setVideoSurface(JNIEnv *env, jobject surface) {
 }
 
 
-void VideoPlayer::start(JNIEnv *env,jobject androidContext) {
+void VideoPlayer::start(JNIEnv *env,jobject androidContext, jstring codec) {
     AAssetManager *assetManager=NDKHelper::getAssetManagerFromContext2(env,androidContext);
     //mParser.setLimitFPS(-1); //Default: Real time !
     const int VS_PORT=5600;
-    const int VS_PROTOCOL=RTP_H265;
+    const char* codec_ = env->GetStringUTFChars(codec, nullptr);
+    const int VS_PROTOCOL = strcmp(codec_, "h265")==0 ? RTP_H265 : RTP_H264;
+    env->ReleaseStringUTFChars(codec, codec_);
     const auto videoDataType=static_cast<VIDEO_DATA_TYPE>(VS_PROTOCOL);
     mUDPReceiver=std::make_unique<UDPReceiver>(javaVm,VS_PORT, "V_UDP_R", -16, [this,videoDataType](const uint8_t* data, size_t data_length) {
         onNewVideoData(data,data_length,videoDataType);
@@ -214,8 +217,8 @@ JNI_METHOD(void, nativeFinalize)
 }
 
 JNI_METHOD(void, nativeStart)
-(JNIEnv * env, jclass jclass1,jlong videoPlayerN,jobject androidContext){
-    native(videoPlayerN)->start(env,androidContext);
+(JNIEnv * env, jclass jclass1,jlong videoPlayerN,jobject androidContext, jstring codec){
+    native(videoPlayerN)->start(env,androidContext, codec);
 }
 
 JNI_METHOD(void, nativeStop)
@@ -224,7 +227,7 @@ JNI_METHOD(void, nativeStop)
 }
 
 JNI_METHOD(void, nativeSetVideoSurface)
-(JNIEnv * env, jclass jclass1,jlong videoPlayerN,jobject surface){
+(JNIEnv * env, jclass jclass1,jlong videoPlayerN,jobject surface, jint codec){
     native(videoPlayerN)->setVideoSurface(env,surface);
 }
 

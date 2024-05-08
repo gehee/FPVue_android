@@ -49,6 +49,7 @@ private:
     RTPDecoder mDecodeRTP;
 
     int maxFPS=0;
+    bool IS_H265=false;
     //First time a NALU was succesfully decoded
     //std::chrono::steady_clock::time_point timeFirstNALUArrived=std::chrono::steady_clock::time_point(0);
 };
