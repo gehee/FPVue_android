@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-sdk
-        android:minSdkVersion="28"
+        android:minSdkVersion="26"
         android:targetSdkVersion="33" />
 
     <uses-feature android:name="android.hardware.usb.host" />
