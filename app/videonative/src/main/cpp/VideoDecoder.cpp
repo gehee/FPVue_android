@@ -110,11 +110,11 @@ void VideoDecoder::configureStartDecoder(){
 
     AMediaFormat* format=AMediaFormat_new();
     AMediaFormat_setString(format,AMEDIAFORMAT_KEY_MIME,MIME.c_str());
-//    AMediaFormat_setInt32(format, "low-latency", 1);
-//    AMediaFormat_setInt32(format, "vendor.low-latency.enable", 1);
-//    AMediaFormat_setInt32(format, "vendor.qti-ext-dec-low-latency.enable", 1);
-//    AMediaFormat_setInt32(format, "vendor.hisi-ext-low-latency-video-dec.video-scene-for-low-latency-req", 1);
-//    AMediaFormat_setInt32(format, "vendor.rtc-ext-dec-low-latency.enable", 1);
+    AMediaFormat_setInt32(format, "low-latency", 1);
+    AMediaFormat_setInt32(format, "vendor.low-latency.enable", 1);
+    AMediaFormat_setInt32(format, "vendor.qti-ext-dec-low-latency.enable", 1);
+    AMediaFormat_setInt32(format, "vendor.hisi-ext-low-latency-video-dec.video-scene-for-low-latency-req", 1);
+    AMediaFormat_setInt32(format, "vendor.rtc-ext-dec-low-latency.enable", 1);
 //    MediaCodec supports two priorities: 0 - realtime, 1 - best effort
 //    AMediaFormat_setInt32(format, "priority", 0);
     if(IS_H265){
@@ -171,33 +171,25 @@ void VideoDecoder::configureStartDecoder(){
     decoder.configured=true;
 }
 
-
 void VideoDecoder::feedDecoder(const NALU& nalu){
-    if(IS_H265 && (nalu.isSPS()  || nalu.isPPS() || nalu.isVPS())){
-        // looks like h265 doesn't like feeding sps/pps/vps during decoding
-        // it could also be that they have to be merged together, but for now just skip them
-        return;
-    }
     const auto now=std::chrono::steady_clock::now();
     const auto deltaParsing=now-nalu.creationTime;
     while(true){
         const auto index=AMediaCodec_dequeueInputBuffer(decoder.codec,BUFFER_TIMEOUT_US);
         if (index >=0) {
             size_t inputBufferSize;
-            void* buf = AMediaCodec_getInputBuffer(decoder.codec,(size_t)index,&inputBufferSize);
+            uint8_t* buf = AMediaCodec_getInputBuffer(decoder.codec,(size_t)index,&inputBufferSize);
             // I have not seen any case where the input buffer returned by MediaCodec is too small to hold the NALU
             // But better be safe than crashing with a memory exception
             if(nalu.getSize()>inputBufferSize){
                 MLOGD<<"Nalu too big"<<nalu.getSize();
                 return;
             }
-            std::memcpy(buf, nalu.getData(),(size_t)nalu.getSize());
-            //this timestamp will be later used to calculate the decoding latency
-            const uint64_t presentationTimeUS=(uint64_t)duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
-//            Doing so causes garbage bug TODO investigate
-//            const auto flag=nalu.isPPS() || nalu.isSPS() ? AMEDIACODEC_BUFFER_FLAG_CODEC_CONFIG : 0;
-//            AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, (size_t)nalu.getSize(),presentationTimeUS, flag);
-            AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, (size_t)nalu.getSize(),presentationTimeUS,0);
+
+            int flag = (IS_H265 && (nalu.isSPS()  || nalu.isPPS() || nalu.isVPS())) ? AMEDIACODEC_BUFFER_FLAG_CODEC_CONFIG : 0;
+            std::memcpy(buf, nalu.getData(), (size_t)nalu.getSize());
+            const uint64_t presentationTimeUS= (uint64_t)duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+            AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, (size_t)nalu.getSize(), presentationTimeUS, flag);
             waitForInputB.add(steady_clock::now() - now);
             parsingTime.add(deltaParsing);
             return;
