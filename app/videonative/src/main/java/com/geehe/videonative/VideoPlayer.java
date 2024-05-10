@@ -174,6 +174,8 @@ public class VideoPlayer implements IVideoParamsChanged{
     public static native void nativeStop(long nativeInstance,Context context);
     public static native void nativeSetVideoSurface(long nativeInstance, Surface surface);
 
+    public static native void nativeStartUDP(int port);
+
     //get members or other information. Some might be only usable in between (nativeStart <-> nativeStop)
     public static native String getVideoInfoString(long nativeInstance);
     public static native boolean anyVideoDataReceived(long nativeInstance);

@@ -10,6 +10,7 @@
 #include "helper/AndroidMediaFormatHelper.h"
 
 #include <vector>
+#include <span>
 
 #include <android/native_window_jni.h>
 #include <media/NdkMediaCodec.h>
@@ -78,7 +79,7 @@ void VideoDecoder::interpretNALU(const NALU& nalu){
     }
     nNALUBytesFed.add(nalu.getSize());
     if(inputPipeClosed){
-        MLOGD << "inputPipeClosed.";
+        //MLOGD << "inputPipeClosed.";
         //A feedD thread (e.g. file or udp) thread might be running even tough no output surface was set
         //But at least we can buffer the sps/pps data
         mKeyFrameFinder.saveIfKeyFrame(nalu);
@@ -190,6 +191,28 @@ void VideoDecoder::feedDecoder(const NALU& nalu){
             std::memcpy(buf, nalu.getData(), (size_t)nalu.getSize());
             const uint64_t presentationTimeUS= (uint64_t)duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
             AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, (size_t)nalu.getSize(), presentationTimeUS, flag);
+
+//            size_t offset = 0;
+//            int flag = 0;
+//            if (config_buff.size() == 3) {
+//                for (NALU ps : config_buff) {
+//                    std::memcpy(buf+offset, ps.getData(), (size_t)ps.getSize());
+//                    offset+=ps.getSize();
+//                }
+//                flag = AMEDIACODEC_BUFFER_FLAG_CODEC_CONFIG;
+//                config_buff.clear();
+//            }
+//            std::memcpy(buf+offset, nalu.getData(), (size_t)nalu.getSize());
+//            //this timestamp will be later used to calculate the decoding latency
+//            if (flag>0){
+//                MLOGD<<"feeding config with idr";
+//            }
+//            const uint64_t presentationTimeUS=(uint64_t)duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+////            Doing so causes garbage bug TODO investigate
+////            const auto flag=nalu.isPPS() || nalu.isSPS() ? AMEDIACODEC_BUFFER_FLAG_CODEC_CONFIG : 0;
+////            AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, (size_t)nalu.getSize(),presentationTimeUS, flag);
+//            AMediaCodec_queueInputBuffer(decoder.codec, (size_t)index, 0, offset + (size_t)nalu.getSize(), presentationTimeUS, flag);
+
             waitForInputB.add(steady_clock::now() - now);
             parsingTime.add(deltaParsing);
             return;

@@ -12,8 +12,13 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+<<<<<<< HEAD
 import android.view.MenuItem;
 import android.view.SubMenu;
+=======
+import android.view.Surface;
+import android.view.SurfaceHolder;
+>>>>>>> 30dab9b (Import moonlight decoder; need rewrite for udp/rtp connection)
 import android.view.View;
 import android.view.WindowManager;
 
@@ -24,6 +29,12 @@ import com.geehe.fpvue.osd.OSDElement;
 import com.geehe.mavlink.MavlinkData;
 import com.geehe.mavlink.MavlinkNative;
 import com.geehe.mavlink.MavlinkUpdate;
+import com.geehe.video.GlPreferences;
+import com.geehe.video.MediaCodecDecoderRenderer;
+import com.geehe.video.MediaCodecHelper;
+import com.geehe.video.MoonBridge;
+import com.geehe.video.PerfOverlayListener;
+import com.geehe.video.PreferenceConfiguration;
 import com.geehe.videonative.DecodingInfo;
 import com.geehe.videonative.IVideoParamsChanged;
 import com.geehe.videonative.VideoPlayer;
@@ -51,7 +62,7 @@ import me.saket.cascade.CascadePopupMenuCheckable;
 
 // Most basic implementation of an activity that uses VideoNative to stream a video
 // Into an Android Surface View
-public class VideoActivity extends AppCompatActivity implements IVideoParamsChanged, WfbNGStatsChanged, MavlinkUpdate, SettingsChanged {
+public class VideoActivity extends AppCompatActivity implements IVideoParamsChanged, WfbNGStatsChanged, MavlinkUpdate, SettingsChanged, PerfOverlayListener, SurfaceHolder.Callback {
     private ActivityVideoBinding binding;
     protected DecodingInfo mDecodingInfo;
     int lastVideoW=0,lastVideoH=0;
@@ -66,6 +77,9 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     VideoPlayer videoPlayerH264;
     VideoPlayer videoPlayerH265;
     private String activeCodec;
+
+    private MediaCodecDecoderRenderer decoderRenderer;
+    private boolean surfaceCreated = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,13 +97,13 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
         // Setup video player
         setContentView(binding.getRoot());
-        videoPlayerH264 = new VideoPlayer(this);
-        videoPlayerH264.setIVideoParamsChanged(this);
-        binding.svH264.getHolder().addCallback(videoPlayerH264.configure1());
-
-        videoPlayerH265 = new VideoPlayer(this);
-        videoPlayerH265.setIVideoParamsChanged(this);
-        binding.svH265.getHolder().addCallback(videoPlayerH265.configure1());
+//        videoPlayerH264 = new VideoPlayer(this);
+//        videoPlayerH264.setIVideoParamsChanged(this);
+//        binding.svH264.getHolder().addCallback(videoPlayerH264.configure1());
+//
+//        videoPlayerH265 = new VideoPlayer(this);
+//        videoPlayerH265.setIVideoParamsChanged(this);
+//        binding.svH265.getHolder().addCallback(videoPlayerH265.configure1());
 
         osdManager = new OSDManager(this, binding);
         osdManager.setUp();
@@ -227,6 +241,93 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             registerReceiver(usbManager, usbFilter);
             registerReceiver(batteryReceiver, batFilter);
         }
+
+
+        GlPreferences glPrefs = GlPreferences.readPreferences(this);
+        MediaCodecHelper.initialize(this, glPrefs.glRenderer);
+        PreferenceConfiguration prefConfig = PreferenceConfiguration.readPreferences(this);
+         decoderRenderer = new MediaCodecDecoderRenderer(
+                this,
+                prefConfig,
+                0,
+                glPrefs.glRenderer,
+                this);
+        decoderRenderer.setRenderTarget(binding.svH265.getHolder());
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        if (!surfaceCreated) {
+            throw new IllegalStateException("Surface changed before creation!");
+        }
+
+
+        decoderRenderer.setRenderTarget(holder);
+        decoderRenderer.setup(MoonBridge.VIDEO_FORMAT_MASK_H265, 1280, 720, 120);
+        //MoonBridge.
+        //MoonBridge.start(5600);
+
+//        if (!attemptedConnection) {
+//            attemptedConnection = true;
+//
+//
+//            decoderRenderer.setRenderTarget(holder);
+//            conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
+//                    decoderRenderer, Game.this);
+//        }
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        float desiredFrameRate = 120;
+
+        surfaceCreated = true;
+
+        // Android will pick the lowest matching refresh rate for a given frame rate value, so we want
+        // to report the true FPS value if refresh rate reduction is enabled. We also report the true
+        // FPS value if there's no suitable matching refresh rate. In that case, Android could try to
+        // select a lower refresh rate that avoids uneven pull-down (ex: 30 Hz for a 60 FPS stream on
+        // a display that maxes out at 50 Hz).
+//        if (mayReduceRefreshRate() || desiredRefreshRate < prefConfig.fps) {
+//            desiredFrameRate = prefConfig.fps;
+//        }
+//        else {
+//            // Otherwise, we will pretend that our frame rate matches the refresh rate we picked in
+//            // prepareDisplayForRendering(). This will usually be the highest refresh rate that our
+//            // frame rate evenly divides into, which ensures the lowest possible display latency.
+//            desiredFrameRate = desiredRefreshRate;
+//        }
+
+        // Tell the OS about our frame rate to allow it to adapt the display refresh rate appropriately
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // We want to change frame rate even if it's not seamless, since prepareDisplayForRendering()
+            // will not set the display mode on S+ if it only differs by the refresh rate. It depends
+            // on us to trigger the frame rate switch here.
+            holder.getSurface().setFrameRate(desiredFrameRate,
+                    Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
+                    Surface.CHANGE_FRAME_RATE_ALWAYS);
+        }
+        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            holder.getSurface().setFrameRate(desiredFrameRate,
+                    Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE);
+        }
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        if (!surfaceCreated) {
+            throw new IllegalStateException("Surface destroyed before creation!");
+        }
+
+        decoderRenderer.prepareForStop();
+//        if (attemptedConnection) {
+//            // Let the decoder know immediately that the surface is gone
+//            decoderRenderer.prepareForStop();
+//
+//            if (connected) {
+//                stopConnection();
+//            }
+//        }
     }
 
     public void unregisterReceivers() {

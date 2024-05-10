@@ -115,6 +115,9 @@ private:
 private:
     KeyFrameFinder mKeyFrameFinder;
     bool IS_H265= false;
+
+
+    std::vector<NALU> config_buff;
 };
 
 

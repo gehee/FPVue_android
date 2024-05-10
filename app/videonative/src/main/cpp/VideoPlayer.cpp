@@ -204,8 +204,7 @@ extern "C"{
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_geehe_videonative_VideoPlayer_nativeInitialize(JNIEnv *env, jclass clazz,
-                                                        jobject context) {
+Java_com_geehe_videonative_VideoPlayer_nativeInitialize(JNIEnv *env, jclass clazz, jobject context) {
     auto* p= new VideoPlayer(env, context);
     return jptr(p);
 }
@@ -295,4 +294,28 @@ JNI_METHOD(void,nativeCallBack)
 }
 
 
+}
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_geehe_videonative_VideoPlayer_nativeStartUDP(JNIEnv *env, jclass clazz, jint port) {
+    const int VS_PORT=5600;
+    const size_t WANTED_UDP_RCVBUF_SIZE=1024*1024*5;
+    JavaVM* javaVm=nullptr;
+    env->GetJavaVM(&javaVm);
+
+    jclass GlobalBridgeClass;
+
+    jmethodID BridgeDrSubmitDecodeUnitMethod;
+
+
+    std::unique_ptr<UDPReceiver> mUDPReceiver = std::make_unique<UDPReceiver>(javaVm,VS_PORT, "V_UDP_R", -16, [](const uint8_t* data, size_t data_length) {
+       // (*env)->SetByteArrayRegion(env, DecodedFrameBuffer, 0, currentEntry->length, (jbyte*)currentEntry->data);
+//        ret = (*env)->CallStaticIntMethod(env, GlobalBridgeClass, BridgeDrSubmitDecodeUnitMethod,
+//                                          data, data_length, currentEntry->bufferType,
+//                                          decodeUnit->frameNumber, decodeUnit->frameType, (jchar)decodeUnit->frameHostProcessingLatency,
+//                                          (jlong)decodeUnit->receiveTimeMs, (jlong)decodeUnit->enqueueTimeMs);
+    }, WANTED_UDP_RCVBUF_SIZE);
+    mUDPReceiver->startReceiving();
 }

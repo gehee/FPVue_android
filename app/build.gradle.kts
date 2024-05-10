@@ -55,8 +55,10 @@ dependencies {
     implementation(libs.material)
     implementation(project(":app:wfbngrtl8812"))
     implementation(project(":app:mavlink"))
+    implementation(project(":app:videonative"))
+    implementation(project(":app:video"))
     implementation("androidx.core:core-ktx:+")
-    implementation ("com.github.Philjay:mpandroidchart:3.1.0")
+    implementation("com.github.Philjay:mpandroidchart:3.1.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
@@ -64,6 +66,4 @@ dependencies {
 
     implementation(libs.me.saket.cascade.cascade)
     implementation(libs.cascade.compose)
-
-    implementation(project(":app:videonative"))
 }
