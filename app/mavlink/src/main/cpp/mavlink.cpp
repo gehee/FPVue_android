@@ -28,99 +28,34 @@
 #include "mavlink/common/mavlink.h"
 #include "mavlink.h"
 
-#define earthRadiusKm 6371.0
-#define BILLION 1000000000L
+long distance_meters_between(double lat1, double lon1, double lat2, double lon2)
+{
+    double delta = (lon1 - lon2) * 0.017453292519;
+    double sdlong = sin(delta);
+    double cdlong = cos(delta);
 
-# define M_PI   3.14159265358979323846  /* pi */
+    lat1 = (lat1) * 0.017453292519;
+    lat2 = (lat2) * 0.017453292519;
 
-double deg2rad(double degrees) {
-    return degrees * M_PI / 180.0;
-}
+    double slat1 = sin(lat1);
+    double clat1 = cos(lat1);
+    double slat2 = sin(lat2);
+    double clat2 = cos(lat2);
 
-struct mavlink_data {
-    // Mavlink
-    float telemetry_altitude;
-    float telemetry_pitch;
-    float telemetry_roll;
-    float telemetry_yaw;
-    float telemetry_battery;
-    float telemetry_current;
-    float telemetry_current_consumed;
-    double telemetry_lat;
-    double telemetry_lon;
-    double telemetry_lat_base;
-    double telemetry_lon_base;
-    double telemetry_hdg;
-    double telemetry_distance;
-    double s1_double;
-    double s2_double;
-    double s3_double;
-    double s4_double;
-    float telemetry_sats;
-    float telemetry_gspeed;
-    float telemetry_vspeed;
-    float telemetry_rssi;
-    float telemetry_throttle;
-    float telemetry_resolution;
-    float telemetry_arm;
-    float armed;
-    char c1[30];
-    char c2[30];
-    char s1[30];
-    char s2[30];
-    char s3[30];
-    char s4[30];
-    char* ptr;
-    int8_t wfb_rssi;
-    uint16_t wfb_errors;
-    uint16_t wfb_fec_fixed;
-    int8_t wfb_flags;
-} latestMavlinkData;
+    delta = (clat1 * slat2) - (slat1 * clat2 * cdlong);
+    delta = delta * delta;
+    delta += (clat2 * sdlong) * (clat2 * sdlong);
+    delta = sqrt(delta);
 
-double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
-    double lat1r, lon1r, lat2r, lon2r, u, v;
-    lat1r = deg2rad(lat1d);
-    lon1r = deg2rad(lon1d);
-    lat2r = deg2rad(lat2d);
-    lon2r = deg2rad(lon2d);
-    u = sin((lat2r - lat1r) / 2);
-    v = sin((lon2r - lon1r) / 2);
+    float denom = (slat1 * slat2) + (clat1 * clat2 * cdlong);
+    delta = atan2(delta, denom);
 
-    return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
-}
-
-size_t numOfChars(const char s[]) {
-    size_t n = 0;
-    while (s[n] != '\0') {
-        ++n;
-    }
-
-    return n;
-}
-
-char* insertString(char s1[], const char s2[], size_t pos) {
-    size_t n1 = numOfChars(s1);
-    size_t n2 = numOfChars(s2);
-    if (n1 < pos) {
-        pos = n1;
-    }
-
-    for (size_t i = 0; i < n1 - pos; i++) {
-        s1[n1 + n2 - i - 1] = s1[n1 - i - 1];
-    }
-
-    for (size_t i = 0; i < n2; i++) {
-        s1[pos + i] = s2[i];
-    }
-
-    s1[n1 + n2] = '\0';
-
-    return s1;
+    return (delta * 6372795.0);
 }
 
 int mavlink_thread_signal = 0;
 std::atomic<bool> latestMavlinkDataChange=false;
-
+void onMavlinkChanged();
 void* listen(int mavlink_port) {
     __android_log_print(ANDROID_LOG_DEBUG, "mavlink.cpp", "Starting mavlink thread...");
     // Create socket
@@ -164,20 +99,72 @@ void* listen(int mavlink_port) {
         }
 
         // Parse
-        // Credit to openIPC:https://github.com/OpenIPC/silicon_research/blob/master/vdec/main.c#L1020
-        mavlink_message_t message;
+        mavlink_message_t msgMav;
         mavlink_status_t status;
+        uint32_t tmp32;
+        uint8_t tmp8;
+        char szBuff[512];
         for (int i = 0; i < ret; ++i) {
-            if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &message, &status) == 1) {
-                switch (message.msgid) {
+            if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &msgMav, &status) == 1) {
+                switch (msgMav.msgid) {
                     case MAVLINK_MSG_ID_HEARTBEAT:
-                        // handle_heartbeat(&message);
+                        tmp32 = mavlink_msg_heartbeat_get_custom_mode(&msgMav);
+                        tmp8 = mavlink_msg_heartbeat_get_base_mode(&msgMav);
+                        latestMavlinkData.flight_mode = 0;
+                        if ( tmp8 & MAV_MODE_FLAG_SAFETY_ARMED ) {
+                            latestMavlinkData.telemetry_arm = 1;
+                            if(latestMavlinkData.gps_fix_type != 0)
+                            {
+                                latestMavlinkData.telemetry_lat_base = latestMavlinkData.telemetry_lat;
+                                latestMavlinkData.telemetry_lon_base = latestMavlinkData.telemetry_lon;
+                            }
+                            else
+                            {
+                                latestMavlinkData.telemetry_lat_base = 0;
+                                latestMavlinkData.telemetry_lon_base = 0;
+                            }
+                        }
+                        else {
+                            latestMavlinkData.telemetry_arm = 0;
+                        }
+
+                        switch ( tmp32 )
+                        {
+                            case PLANE_MODE_MANUAL: latestMavlinkData.flight_mode = FLIGHT_MODE_MANUAL; break;
+                            case PLANE_MODE_CIRCLE: latestMavlinkData.flight_mode = FLIGHT_MODE_CIRCLE; break;
+                            case PLANE_MODE_STABILIZE: latestMavlinkData.flight_mode = FLIGHT_MODE_STAB; break;
+                            case PLANE_MODE_FLY_BY_WIRE_A: latestMavlinkData.flight_mode = FLIGHT_MODE_FBWA; break;
+                            case PLANE_MODE_FLY_BY_WIRE_B: latestMavlinkData.flight_mode = FLIGHT_MODE_FBWB; break;
+                            case PLANE_MODE_ACRO: latestMavlinkData.flight_mode = FLIGHT_MODE_ACRO; break;
+                            case PLANE_MODE_AUTO: latestMavlinkData.flight_mode = FLIGHT_MODE_AUTO; break;
+                            case PLANE_MODE_AUTOTUNE: latestMavlinkData.flight_mode = FLIGHT_MODE_AUTOTUNE; break;
+                            case PLANE_MODE_RTL: latestMavlinkData.flight_mode = FLIGHT_MODE_RTL; break;
+                            case PLANE_MODE_LOITER: latestMavlinkData.flight_mode = FLIGHT_MODE_LOITER; break;
+                            case PLANE_MODE_TAKEOFF: latestMavlinkData.flight_mode = FLIGHT_MODE_TAKEOFF; break;
+                            case PLANE_MODE_CRUISE: latestMavlinkData.flight_mode = FLIGHT_MODE_CRUISE; break;
+                            case PLANE_MODE_QSTABILIZE: latestMavlinkData.flight_mode = FLIGHT_MODE_QSTAB; break;
+                            case PLANE_MODE_QHOVER: latestMavlinkData.flight_mode = FLIGHT_MODE_QHOVER; break;
+                            case PLANE_MODE_QLOITER: latestMavlinkData.flight_mode = FLIGHT_MODE_QLOITER; break;
+                            case PLANE_MODE_QLAND: latestMavlinkData.flight_mode = FLIGHT_MODE_QLAND; break;
+                            case PLANE_MODE_QRTL: latestMavlinkData.flight_mode = FLIGHT_MODE_QRTL; break;
+                        }
+
+                        break;
+
+                    case MAVLINK_MSG_ID_STATUSTEXT:
+                        mavlink_msg_statustext_get_text(&msgMav, szBuff);
+                        memcpy(latestMavlinkData.status_text, szBuff, 101);
+                        break;
+
+                    case MAVLINK_MSG_ID_STATUSTEXT_LONG:
+                        mavlink_msg_statustext_long_get_text(&msgMav, szBuff);
+                        memcpy(latestMavlinkData.status_text, szBuff, 101);
                         break;
 
                     case MAVLINK_MSG_ID_SYS_STATUS:
                     {
                         mavlink_sys_status_t bat;
-                        mavlink_msg_sys_status_decode(&message, &bat);
+                        mavlink_msg_sys_status_decode(&msgMav, &bat);
                         latestMavlinkData.telemetry_battery = bat.voltage_battery;
                         latestMavlinkData.telemetry_current = bat.current_battery;
                         latestMavlinkDataChange=true;
@@ -187,117 +174,56 @@ void* listen(int mavlink_port) {
                     case MAVLINK_MSG_ID_BATTERY_STATUS:
                     {
                         mavlink_battery_status_t batt;
-                        mavlink_msg_battery_status_decode(&message, &batt);
+                        mavlink_msg_battery_status_decode(&msgMav, &batt);
                         latestMavlinkData.telemetry_current_consumed = batt.current_consumed;
                         latestMavlinkDataChange=true;
                     }
                         break;
 
                     case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
+                    case MAVLINK_MSG_ID_RC_CHANNELS:
                     {
-                        mavlink_rc_channels_raw_t rc_channels_raw;
-                        mavlink_msg_rc_channels_raw_decode( &message, &rc_channels_raw);
-                        latestMavlinkData.telemetry_rssi = rc_channels_raw.rssi;
-                        latestMavlinkData.telemetry_throttle = (rc_channels_raw.chan4_raw - 1000) / 10;
-
-                        if (latestMavlinkData.telemetry_throttle < 0) {
-                            latestMavlinkData.telemetry_throttle = 0;
-                        }
-                        latestMavlinkData.telemetry_arm = rc_channels_raw.chan5_raw;
-                        latestMavlinkData.telemetry_resolution = rc_channels_raw.chan8_raw;
-                        latestMavlinkDataChange=true;
-                    }
-                        break;
-
-                    case MAVLINK_MSG_ID_GPS_RAW_INT:
-                    {
-                        mavlink_gps_raw_int_t gps;
-                        mavlink_msg_gps_raw_int_decode(&message, &gps);
-                        latestMavlinkData.telemetry_sats = gps.satellites_visible;
-                        latestMavlinkData.telemetry_lat = gps.lat;
-                        latestMavlinkData.telemetry_lon = gps.lon;
-                        if (latestMavlinkData.telemetry_arm > 1700) {
-                            if (latestMavlinkData.armed < 1) {
-                                latestMavlinkData.armed = 1;
-                                latestMavlinkData.telemetry_lat_base = latestMavlinkData.telemetry_lat;
-                                latestMavlinkData.telemetry_lon_base = latestMavlinkData.telemetry_lon;
-                            }
-
-                            sprintf(latestMavlinkData.s1, "%.00f", latestMavlinkData.telemetry_lat);
-                            if (latestMavlinkData.telemetry_lat < 10000000) {
-                                insertString(latestMavlinkData.s1, "0.", 0);
-                            }
-                            if (latestMavlinkData.telemetry_lat > 9999999) {
-                                if (numOfChars(latestMavlinkData.s1) == 8) {
-                                    insertString(latestMavlinkData.s1, ".", 1);
-                                } else {
-                                    insertString(latestMavlinkData.s1, ".", 2);
-                                }
-                            }
-
-                            sprintf(latestMavlinkData.s2, "%.00f", latestMavlinkData.telemetry_lon);
-                            if (latestMavlinkData.telemetry_lon < 10000000) {
-                                insertString(latestMavlinkData.s2, "0.", 0);
-                            }
-                            if (latestMavlinkData.telemetry_lon > 9999999) {
-                                if (numOfChars(latestMavlinkData.s2) == 8) {
-                                    insertString(latestMavlinkData.s2, ".", 1);
-                                } else {
-                                    insertString(latestMavlinkData.s2, ".", 2);
-                                }
-                            }
-
-                            sprintf(latestMavlinkData.s3, "%.00f", latestMavlinkData.telemetry_lat_base);
-                            if (latestMavlinkData.telemetry_lat_base < 10000000) {
-                                insertString(latestMavlinkData.s3, "0.", 0);
-                            }
-                            if (latestMavlinkData.telemetry_lat_base > 9999999) {
-                                if (numOfChars(latestMavlinkData.s3) == 8) {
-                                    insertString(latestMavlinkData.s3, ".", 1);
-                                } else {
-                                    insertString(latestMavlinkData.s3, ".", 2);
-                                }
-                            }
-
-                            sprintf(latestMavlinkData.s4, "%.00f", latestMavlinkData.telemetry_lon_base);
-                            if (latestMavlinkData.telemetry_lon_base < 10000000) {
-                                insertString(latestMavlinkData.s4, "0.", 0);
-                            }
-
-                            if (latestMavlinkData.telemetry_lon_base > 9999999) {
-                                if (numOfChars(latestMavlinkData.s4) == 8) {
-                                    insertString(latestMavlinkData.s4, ".", 1);
-                                } else {
-                                    insertString(latestMavlinkData.s4, ".", 2);
-                                }
-                            }
-
-                            latestMavlinkData.s1_double = strtod(latestMavlinkData.s1, &latestMavlinkData.ptr);
-                            latestMavlinkData.s2_double = strtod(latestMavlinkData.s2, &latestMavlinkData.ptr);
-                            latestMavlinkData.s3_double = strtod(latestMavlinkData.s3, &latestMavlinkData.ptr);
-                            latestMavlinkData.s4_double = strtod(latestMavlinkData.s4, &latestMavlinkData.ptr);
-                        }
-                        latestMavlinkData.telemetry_distance = distanceEarth(latestMavlinkData.s1_double, latestMavlinkData.s2_double, latestMavlinkData.s3_double, latestMavlinkData.s4_double);
-                        latestMavlinkDataChange=true;
-                    }
-                        break;
-
-                    case MAVLINK_MSG_ID_VFR_HUD:
-                    {
-                        mavlink_vfr_hud_t vfr;
-                        mavlink_msg_vfr_hud_decode(&message, &vfr);
-                        latestMavlinkData.telemetry_gspeed = vfr.groundspeed * 3.6;
-                        latestMavlinkData.telemetry_vspeed = vfr.climb;
-                        latestMavlinkData.telemetry_altitude = vfr.alt;
+                        int tmpi = (int)((uint8_t)mavlink_msg_rc_channels_raw_get_rssi(&msgMav));
+                        latestMavlinkData.telemetry_rssi = (tmpi*100)/255;
+                        latestMavlinkData.telemetry_resolution = mavlink_msg_rc_channels_raw_get_chan8_raw(&msgMav);
                         latestMavlinkDataChange=true;
                     }
                         break;
 
                     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
                     {
-                        mavlink_global_position_int_t global_position_int;
-                        mavlink_msg_global_position_int_decode( &message, &global_position_int);
-                        latestMavlinkData.telemetry_hdg = global_position_int.hdg / 100;
+                        latestMavlinkData.heading = mavlink_msg_global_position_int_get_hdg(&msgMav) / 100.0f;
+                        latestMavlinkData.telemetry_altitude = mavlink_msg_global_position_int_get_relative_alt(&msgMav) / 10.0f + 100000;
+                        latestMavlinkData.telemetry_lat = mavlink_msg_global_position_int_get_lat(&msgMav);
+                        latestMavlinkData.telemetry_lon = mavlink_msg_global_position_int_get_lon(&msgMav);
+                        if(latestMavlinkData.gps_fix_type != 0 && latestMavlinkData.telemetry_arm == 1 )
+                        {
+                            latestMavlinkData.telemetry_distance = 100 * distance_meters_between( latestMavlinkData.telemetry_lat_base/10000000.0, latestMavlinkData.telemetry_lon_base/10000000.0, latestMavlinkData.telemetry_lat/10000000.0, latestMavlinkData.telemetry_lon/10000000.0 );
+                        }
+                        else
+                        {
+                            latestMavlinkData.telemetry_distance = 0;
+                        }
+                        latestMavlinkDataChange=true;
+                        break;
+                    }
+
+                    case MAVLINK_MSG_ID_GPS_RAW_INT:
+                    {
+                        latestMavlinkData.gps_fix_type = mavlink_msg_gps_raw_int_get_fix_type(&msgMav);
+                        latestMavlinkData.telemetry_sats = mavlink_msg_gps_raw_int_get_satellites_visible(&msgMav);
+                        latestMavlinkData.hdop = mavlink_msg_gps_raw_int_get_eph(&msgMav);
+                        latestMavlinkData.telemetry_lat = mavlink_msg_gps_raw_int_get_lat(&msgMav);
+                        latestMavlinkData.telemetry_lon = mavlink_msg_gps_raw_int_get_lon(&msgMav);
+                        latestMavlinkDataChange=true;
+                    }
+                        break;
+
+                    case MAVLINK_MSG_ID_VFR_HUD:
+                    {
+                        latestMavlinkData.telemetry_throttle = mavlink_msg_vfr_hud_get_throttle(&msgMav);
+                        latestMavlinkData.telemetry_vspeed = mavlink_msg_vfr_hud_get_climb(&msgMav)*100 + 100000;
+                        latestMavlinkData.telemetry_gspeed = mavlink_msg_vfr_hud_get_groundspeed(&msgMav) * 100.0f + 100000;
                         latestMavlinkDataChange=true;
                     }
                         break;
@@ -305,7 +231,7 @@ void* listen(int mavlink_port) {
                     case MAVLINK_MSG_ID_ATTITUDE:
                     {
                         mavlink_attitude_t att;
-                        mavlink_msg_attitude_decode(&message, &att);
+                        mavlink_msg_attitude_decode(&msgMav, &att);
                         latestMavlinkData.telemetry_pitch = att.pitch * (180.0 / 3.141592653589793238463);
                         latestMavlinkData.telemetry_roll = att.roll * (180.0 / 3.141592653589793238463);
                         latestMavlinkData.telemetry_yaw = att.yaw * (180.0 / 3.141592653589793238463);
@@ -315,25 +241,24 @@ void* listen(int mavlink_port) {
 
                     case MAVLINK_MSG_ID_RADIO_STATUS:
                     {
-                        if ((message.sysid != 3) || (message.compid != 68)) {
+                        if ((msgMav.sysid != 3) || (msgMav.compid != 68)) {
                             break;
                         }
-                        latestMavlinkData.wfb_rssi = (int8_t)mavlink_msg_radio_status_get_rssi(&message);
-                        latestMavlinkData.wfb_errors = mavlink_msg_radio_status_get_rxerrors(&message);
-                        latestMavlinkData.wfb_fec_fixed = mavlink_msg_radio_status_get_fixed(&message);
-                        latestMavlinkData.wfb_flags = mavlink_msg_radio_status_get_remnoise(&message);
+                        latestMavlinkData.wfb_rssi = (int8_t)mavlink_msg_radio_status_get_rssi(&msgMav);
+                        latestMavlinkData.wfb_errors = mavlink_msg_radio_status_get_rxerrors(&msgMav);
+                        latestMavlinkData.wfb_fec_fixed = mavlink_msg_radio_status_get_fixed(&msgMav);
+                        latestMavlinkData.wfb_flags = mavlink_msg_radio_status_get_remnoise(&msgMav);
                         latestMavlinkDataChange=true;
                     }
                         break;
 
                     default:
-                        // printf("> MavLink message %d from %d/%d\n",
-                        //   message.msgid, message.sysid, message.compid);
+                        // printf("> MavLink msgMav %d from %d/%d\n",
+                        //   msgMav.msgid, msgMav.sysid, msgMav.compid);
                         break;
                 }
             }
         }
-
         usleep(1);
     }
 
@@ -341,19 +266,19 @@ void* listen(int mavlink_port) {
     return 0;
 }
 
-
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_geehe_mavlink_MavlinkNative_nativeCallBack(JNIEnv *env, jclass clazz, jobject mavlinkChangeI) {
+//    g_context = mavlinkChangeI;
     //Update all java stuff
     if(latestMavlinkDataChange){
         jclass jClassExtendsMavlinkChangeI= env->GetObjectClass(mavlinkChangeI);
         jclass jcMavlinkData = env->FindClass("com/geehe/mavlink/MavlinkData");
         assert(jcMavlinkData!=nullptr);
-        jmethodID jcMavlinkDataConstructor = env->GetMethodID(jcMavlinkData, "<init>", "(FFFFFFFDDDDDDFFFFF)V");
+        jmethodID jcMavlinkDataConstructor = env->GetMethodID(jcMavlinkData, "<init>", "(FFFFFFFDDDDDDFFFFBBBBBBLjava/lang/String;)V");
         assert(jcMavlinkDataConstructor!= nullptr);
-        //const auto data = latestMavlinkData;
-        auto mavlinkData=env->NewObject(jcMavlinkData,jcMavlinkDataConstructor,
+        jstring pJstring = env->NewStringUTF(latestMavlinkData.status_text);
+        auto mavlinkData=env->NewObject(jcMavlinkData, jcMavlinkDataConstructor,
                                         (jfloat)latestMavlinkData.telemetry_altitude,
                                         (jfloat)latestMavlinkData.telemetry_pitch,
                                         (jfloat)latestMavlinkData.telemetry_roll,
@@ -371,12 +296,23 @@ Java_com_geehe_mavlink_MavlinkNative_nativeCallBack(JNIEnv *env, jclass clazz, j
                                         (jfloat)latestMavlinkData.telemetry_gspeed,
                                         (jfloat)latestMavlinkData.telemetry_vspeed,
                                         (jfloat)latestMavlinkData.telemetry_throttle,
-                                        (jfloat)latestMavlinkData.telemetry_arm);
+                                        (jbyte)latestMavlinkData.telemetry_arm,
+                                        (jbyte)latestMavlinkData.flight_mode,
+                                        (jbyte)latestMavlinkData.gps_fix_type,
+                                        (jbyte)latestMavlinkData.hdop,
+                                        (jbyte)latestMavlinkData.telemetry_rssi,
+                                        (jbyte)latestMavlinkData.heading,
+                                        pJstring);
         assert(mavlinkData!=nullptr);
         jmethodID onNewMavlinkDataJAVA = env->GetMethodID(jClassExtendsMavlinkChangeI, "onNewMavlinkData", "(Lcom/geehe/mavlink/MavlinkData;)V");
         assert(onNewMavlinkDataJAVA!=nullptr);
         env->CallVoidMethod(mavlinkChangeI,onNewMavlinkDataJAVA,mavlinkData);
         latestMavlinkDataChange=false;
+
+        // Clean up local references
+        env->DeleteLocalRef(jcMavlinkData);
+        env->DeleteLocalRef(mavlinkData);
+        env->DeleteLocalRef(pJstring);
     }
 }
 extern "C"

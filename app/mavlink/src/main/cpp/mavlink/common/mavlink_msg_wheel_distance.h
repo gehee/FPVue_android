@@ -3,12 +3,12 @@
 
 #define MAVLINK_MSG_ID_WHEEL_DISTANCE 9000
 
-
+MAVPACKED(
 typedef struct __mavlink_wheel_distance_t {
  uint64_t time_usec; /*< [us] Timestamp (synced to UNIX time or since system boot).*/
  double distance[16]; /*< [m] Distance reported by individual wheel encoders. Forward rotations increase values, reverse rotations decrease them. Not all wheels will necessarily have wheel encoders; the mapping of encoders to wheel positions must be agreed/understood by the endpoints.*/
  uint8_t count; /*<  Number of wheels reported.*/
-} mavlink_wheel_distance_t;
+}) mavlink_wheel_distance_t;
 
 #define MAVLINK_MSG_ID_WHEEL_DISTANCE_LEN 137
 #define MAVLINK_MSG_ID_WHEEL_DISTANCE_MIN_LEN 137
@@ -176,7 +176,7 @@ static inline void mavlink_msg_wheel_distance_send_struct(mavlink_channel_t chan
 
 #if MAVLINK_MSG_ID_WHEEL_DISTANCE_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

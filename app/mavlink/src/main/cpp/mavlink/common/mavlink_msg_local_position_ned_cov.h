@@ -3,9 +3,9 @@
 
 #define MAVLINK_MSG_ID_LOCAL_POSITION_NED_COV 64
 
-
+MAVPACKED(
 typedef struct __mavlink_local_position_ned_cov_t {
- uint64_t time_usec; /*< [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.*/
+ uint64_t time_usec; /*< [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.*/
  float x; /*< [m] X Position*/
  float y; /*< [m] Y Position*/
  float z; /*< [m] Z Position*/
@@ -15,9 +15,9 @@ typedef struct __mavlink_local_position_ned_cov_t {
  float ax; /*< [m/s/s] X Acceleration*/
  float ay; /*< [m/s/s] Y Acceleration*/
  float az; /*< [m/s/s] Z Acceleration*/
- float covariance[45]; /*<  Row-major representation of position, velocity and acceleration 9x9 cross-covariance matrix upper right triangle (states: x, y, z, vx, vy, vz, ax, ay, az; first nine entries are the first ROW, next eight entries are the second row, etc.). If unknown, assign NaN value to first element in the array.*/
+ float covariance[45]; /*<  Covariance matrix upper right triangular (first nine entries are the first ROW, next eight entries are the second row, etc.)*/
  uint8_t estimator_type; /*<  Class id of the estimator this estimate originated from.*/
-} mavlink_local_position_ned_cov_t;
+}) mavlink_local_position_ned_cov_t;
 
 #define MAVLINK_MSG_ID_LOCAL_POSITION_NED_COV_LEN 225
 #define MAVLINK_MSG_ID_LOCAL_POSITION_NED_COV_MIN_LEN 225
@@ -74,7 +74,7 @@ typedef struct __mavlink_local_position_ned_cov_t {
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param msg The MAVLink message to compress the data into
  *
- * @param time_usec [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.
+ * @param time_usec [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.
  * @param estimator_type  Class id of the estimator this estimate originated from.
  * @param x [m] X Position
  * @param y [m] Y Position
@@ -85,7 +85,7 @@ typedef struct __mavlink_local_position_ned_cov_t {
  * @param ax [m/s/s] X Acceleration
  * @param ay [m/s/s] Y Acceleration
  * @param az [m/s/s] Z Acceleration
- * @param covariance  Row-major representation of position, velocity and acceleration 9x9 cross-covariance matrix upper right triangle (states: x, y, z, vx, vy, vz, ax, ay, az; first nine entries are the first ROW, next eight entries are the second row, etc.). If unknown, assign NaN value to first element in the array.
+ * @param covariance  Covariance matrix upper right triangular (first nine entries are the first ROW, next eight entries are the second row, etc.)
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_local_position_ned_cov_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
@@ -133,7 +133,7 @@ static inline uint16_t mavlink_msg_local_position_ned_cov_pack(uint8_t system_id
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message will be sent over
  * @param msg The MAVLink message to compress the data into
- * @param time_usec [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.
+ * @param time_usec [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.
  * @param estimator_type  Class id of the estimator this estimate originated from.
  * @param x [m] X Position
  * @param y [m] Y Position
@@ -144,7 +144,7 @@ static inline uint16_t mavlink_msg_local_position_ned_cov_pack(uint8_t system_id
  * @param ax [m/s/s] X Acceleration
  * @param ay [m/s/s] Y Acceleration
  * @param az [m/s/s] Z Acceleration
- * @param covariance  Row-major representation of position, velocity and acceleration 9x9 cross-covariance matrix upper right triangle (states: x, y, z, vx, vy, vz, ax, ay, az; first nine entries are the first ROW, next eight entries are the second row, etc.). If unknown, assign NaN value to first element in the array.
+ * @param covariance  Covariance matrix upper right triangular (first nine entries are the first ROW, next eight entries are the second row, etc.)
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_local_position_ned_cov_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
@@ -218,7 +218,7 @@ static inline uint16_t mavlink_msg_local_position_ned_cov_encode_chan(uint8_t sy
  * @brief Send a local_position_ned_cov message
  * @param chan MAVLink channel to send the message
  *
- * @param time_usec [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.
+ * @param time_usec [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.
  * @param estimator_type  Class id of the estimator this estimate originated from.
  * @param x [m] X Position
  * @param y [m] Y Position
@@ -229,7 +229,7 @@ static inline uint16_t mavlink_msg_local_position_ned_cov_encode_chan(uint8_t sy
  * @param ax [m/s/s] X Acceleration
  * @param ay [m/s/s] Y Acceleration
  * @param az [m/s/s] Z Acceleration
- * @param covariance  Row-major representation of position, velocity and acceleration 9x9 cross-covariance matrix upper right triangle (states: x, y, z, vx, vy, vz, ax, ay, az; first nine entries are the first ROW, next eight entries are the second row, etc.). If unknown, assign NaN value to first element in the array.
+ * @param covariance  Covariance matrix upper right triangular (first nine entries are the first ROW, next eight entries are the second row, etc.)
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
@@ -284,7 +284,7 @@ static inline void mavlink_msg_local_position_ned_cov_send_struct(mavlink_channe
 
 #if MAVLINK_MSG_ID_LOCAL_POSITION_NED_COV_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an
@@ -334,7 +334,7 @@ static inline void mavlink_msg_local_position_ned_cov_send_buf(mavlink_message_t
 /**
  * @brief Get field time_usec from local_position_ned_cov message
  *
- * @return [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.
+ * @return [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.
  */
 static inline uint64_t mavlink_msg_local_position_ned_cov_get_time_usec(const mavlink_message_t* msg)
 {
@@ -444,7 +444,7 @@ static inline float mavlink_msg_local_position_ned_cov_get_az(const mavlink_mess
 /**
  * @brief Get field covariance from local_position_ned_cov message
  *
- * @return  Row-major representation of position, velocity and acceleration 9x9 cross-covariance matrix upper right triangle (states: x, y, z, vx, vy, vz, ax, ay, az; first nine entries are the first ROW, next eight entries are the second row, etc.). If unknown, assign NaN value to first element in the array.
+ * @return  Covariance matrix upper right triangular (first nine entries are the first ROW, next eight entries are the second row, etc.)
  */
 static inline uint16_t mavlink_msg_local_position_ned_cov_get_covariance(const mavlink_message_t* msg, float *covariance)
 {

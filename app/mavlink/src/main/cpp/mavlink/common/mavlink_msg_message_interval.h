@@ -3,11 +3,11 @@
 
 #define MAVLINK_MSG_ID_MESSAGE_INTERVAL 244
 
-
+MAVPACKED(
 typedef struct __mavlink_message_interval_t {
  int32_t interval_us; /*< [us] The interval between two messages. A value of -1 indicates this stream is disabled, 0 indicates it is not available, > 0 indicates the interval at which it is sent.*/
  uint16_t message_id; /*<  The ID of the requested MAVLink message. v1.0 is limited to 254 messages.*/
-} mavlink_message_interval_t;
+}) mavlink_message_interval_t;
 
 #define MAVLINK_MSG_ID_MESSAGE_INTERVAL_LEN 6
 #define MAVLINK_MSG_ID_MESSAGE_INTERVAL_MIN_LEN 6
@@ -170,7 +170,7 @@ static inline void mavlink_msg_message_interval_send_struct(mavlink_channel_t ch
 
 #if MAVLINK_MSG_ID_MESSAGE_INTERVAL_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

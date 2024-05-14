@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_MANUAL_SETPOINT 81
 
-
+MAVPACKED(
 typedef struct __mavlink_manual_setpoint_t {
  uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
  float roll; /*< [rad/s] Desired roll rate*/
@@ -12,7 +12,7 @@ typedef struct __mavlink_manual_setpoint_t {
  float thrust; /*<  Collective thrust, normalized to 0 .. 1*/
  uint8_t mode_switch; /*<  Flight mode switch position, 0.. 255*/
  uint8_t manual_override_switch; /*<  Override mode switch position, 0.. 255*/
-} mavlink_manual_setpoint_t;
+}) mavlink_manual_setpoint_t;
 
 #define MAVLINK_MSG_ID_MANUAL_SETPOINT_LEN 22
 #define MAVLINK_MSG_ID_MANUAL_SETPOINT_MIN_LEN 22
@@ -230,7 +230,7 @@ static inline void mavlink_msg_manual_setpoint_send_struct(mavlink_channel_t cha
 
 #if MAVLINK_MSG_ID_MANUAL_SETPOINT_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

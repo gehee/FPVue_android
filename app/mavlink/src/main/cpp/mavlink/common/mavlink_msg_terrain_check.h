@@ -3,11 +3,11 @@
 
 #define MAVLINK_MSG_ID_TERRAIN_CHECK 135
 
-
+MAVPACKED(
 typedef struct __mavlink_terrain_check_t {
  int32_t lat; /*< [degE7] Latitude*/
  int32_t lon; /*< [degE7] Longitude*/
-} mavlink_terrain_check_t;
+}) mavlink_terrain_check_t;
 
 #define MAVLINK_MSG_ID_TERRAIN_CHECK_LEN 8
 #define MAVLINK_MSG_ID_TERRAIN_CHECK_MIN_LEN 8
@@ -170,7 +170,7 @@ static inline void mavlink_msg_terrain_check_send_struct(mavlink_channel_t chan,
 
 #if MAVLINK_MSG_ID_TERRAIN_CHECK_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

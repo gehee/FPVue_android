@@ -3,13 +3,13 @@
 
 #define MAVLINK_MSG_ID_GPS_INJECT_DATA 123
 
-
+MAVPACKED(
 typedef struct __mavlink_gps_inject_data_t {
  uint8_t target_system; /*<  System ID*/
  uint8_t target_component; /*<  Component ID*/
  uint8_t len; /*< [bytes] Data length*/
  uint8_t data[110]; /*<  Raw data (110 is enough for 12 satellites of RTCMv2)*/
-} mavlink_gps_inject_data_t;
+}) mavlink_gps_inject_data_t;
 
 #define MAVLINK_MSG_ID_GPS_INJECT_DATA_LEN 113
 #define MAVLINK_MSG_ID_GPS_INJECT_DATA_MIN_LEN 113
@@ -188,7 +188,7 @@ static inline void mavlink_msg_gps_inject_data_send_struct(mavlink_channel_t cha
 
 #if MAVLINK_MSG_ID_GPS_INJECT_DATA_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

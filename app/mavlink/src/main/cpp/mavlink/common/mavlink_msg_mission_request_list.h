@@ -3,12 +3,12 @@
 
 #define MAVLINK_MSG_ID_MISSION_REQUEST_LIST 43
 
-
+MAVPACKED(
 typedef struct __mavlink_mission_request_list_t {
  uint8_t target_system; /*<  System ID*/
  uint8_t target_component; /*<  Component ID*/
  uint8_t mission_type; /*<  Mission type.*/
-} mavlink_mission_request_list_t;
+}) mavlink_mission_request_list_t;
 
 #define MAVLINK_MSG_ID_MISSION_REQUEST_LIST_LEN 3
 #define MAVLINK_MSG_ID_MISSION_REQUEST_LIST_MIN_LEN 2
@@ -182,7 +182,7 @@ static inline void mavlink_msg_mission_request_list_send_struct(mavlink_channel_
 
 #if MAVLINK_MSG_ID_MISSION_REQUEST_LIST_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

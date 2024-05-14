@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_ADSB_VEHICLE 246
 
-
+MAVPACKED(
 typedef struct __mavlink_adsb_vehicle_t {
  uint32_t ICAO_address; /*<  ICAO address*/
  int32_t lat; /*< [degE7] Latitude*/
@@ -18,7 +18,7 @@ typedef struct __mavlink_adsb_vehicle_t {
  char callsign[9]; /*<  The callsign, 8+null*/
  uint8_t emitter_type; /*<  ADSB emitter type.*/
  uint8_t tslc; /*< [s] Time since last communication in seconds*/
-} mavlink_adsb_vehicle_t;
+}) mavlink_adsb_vehicle_t;
 
 #define MAVLINK_MSG_ID_ADSB_VEHICLE_LEN 38
 #define MAVLINK_MSG_ID_ADSB_VEHICLE_MIN_LEN 38
@@ -296,7 +296,7 @@ static inline void mavlink_msg_adsb_vehicle_send_struct(mavlink_channel_t chan, 
 
 #if MAVLINK_MSG_ID_ADSB_VEHICLE_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an
