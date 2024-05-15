@@ -3,13 +3,13 @@
 
 #define MAVLINK_MSG_ID_SETUP_SIGNING 256
 
-
+MAVPACKED(
 typedef struct __mavlink_setup_signing_t {
  uint64_t initial_timestamp; /*<  initial timestamp*/
  uint8_t target_system; /*<  system id of the target*/
  uint8_t target_component; /*<  component ID of the target*/
  uint8_t secret_key[32]; /*<  signing key*/
-} mavlink_setup_signing_t;
+}) mavlink_setup_signing_t;
 
 #define MAVLINK_MSG_ID_SETUP_SIGNING_LEN 42
 #define MAVLINK_MSG_ID_SETUP_SIGNING_MIN_LEN 42
@@ -188,7 +188,7 @@ static inline void mavlink_msg_setup_signing_send_struct(mavlink_channel_t chan,
 
 #if MAVLINK_MSG_ID_SETUP_SIGNING_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA 55
 
-
+MAVPACKED(
 typedef struct __mavlink_safety_allowed_area_t {
  float p1x; /*< [m] x position 1 / Latitude 1*/
  float p1y; /*< [m] y position 1 / Longitude 1*/
@@ -12,7 +12,7 @@ typedef struct __mavlink_safety_allowed_area_t {
  float p2y; /*< [m] y position 2 / Longitude 2*/
  float p2z; /*< [m] z position 2 / Altitude 2*/
  uint8_t frame; /*<  Coordinate frame. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.*/
-} mavlink_safety_allowed_area_t;
+}) mavlink_safety_allowed_area_t;
 
 #define MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_LEN 25
 #define MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_MIN_LEN 25
@@ -230,7 +230,7 @@ static inline void mavlink_msg_safety_allowed_area_send_struct(mavlink_channel_t
 
 #if MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

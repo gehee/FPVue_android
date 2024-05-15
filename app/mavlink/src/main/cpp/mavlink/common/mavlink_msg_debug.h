@@ -3,12 +3,12 @@
 
 #define MAVLINK_MSG_ID_DEBUG 254
 
-
+MAVPACKED(
 typedef struct __mavlink_debug_t {
  uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
  float value; /*<  DEBUG value*/
  uint8_t ind; /*<  index of debug variable*/
-} mavlink_debug_t;
+}) mavlink_debug_t;
 
 #define MAVLINK_MSG_ID_DEBUG_LEN 9
 #define MAVLINK_MSG_ID_DEBUG_MIN_LEN 9
@@ -182,7 +182,7 @@ static inline void mavlink_msg_debug_send_struct(mavlink_channel_t chan, const m
 
 #if MAVLINK_MSG_ID_DEBUG_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

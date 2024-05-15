@@ -3,12 +3,12 @@
 
 #define MAVLINK_MSG_ID_NAMED_VALUE_FLOAT 251
 
-
+MAVPACKED(
 typedef struct __mavlink_named_value_float_t {
  uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
  float value; /*<  Floating point value*/
  char name[10]; /*<  Name of the debug variable*/
-} mavlink_named_value_float_t;
+}) mavlink_named_value_float_t;
 
 #define MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN 18
 #define MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_MIN_LEN 18
@@ -176,7 +176,7 @@ static inline void mavlink_msg_named_value_float_send_struct(mavlink_channel_t c
 
 #if MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE 130
 
-
+MAVPACKED(
 typedef struct __mavlink_data_transmission_handshake_t {
  uint32_t size; /*< [bytes] total data size (set on ACK only).*/
  uint16_t width; /*<  Width of a matrix or image.*/
@@ -12,7 +12,7 @@ typedef struct __mavlink_data_transmission_handshake_t {
  uint8_t type; /*<  Type of requested/acknowledged data.*/
  uint8_t payload; /*< [bytes] Payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only).*/
  uint8_t jpg_quality; /*< [%] JPEG quality. Values: [1-100].*/
-} mavlink_data_transmission_handshake_t;
+}) mavlink_data_transmission_handshake_t;
 
 #define MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE_LEN 13
 #define MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE_MIN_LEN 13
@@ -230,7 +230,7 @@ static inline void mavlink_msg_data_transmission_handshake_send_struct(mavlink_c
 
 #if MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

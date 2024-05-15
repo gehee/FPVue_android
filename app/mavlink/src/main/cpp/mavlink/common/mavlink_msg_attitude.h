@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_ATTITUDE 30
 
-
+MAVPACKED(
 typedef struct __mavlink_attitude_t {
  uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
  float roll; /*< [rad] Roll angle (-pi..+pi)*/
@@ -12,7 +12,7 @@ typedef struct __mavlink_attitude_t {
  float rollspeed; /*< [rad/s] Roll angular speed*/
  float pitchspeed; /*< [rad/s] Pitch angular speed*/
  float yawspeed; /*< [rad/s] Yaw angular speed*/
-} mavlink_attitude_t;
+}) mavlink_attitude_t;
 
 #define MAVLINK_MSG_ID_ATTITUDE_LEN 28
 #define MAVLINK_MSG_ID_ATTITUDE_MIN_LEN 28
@@ -230,7 +230,7 @@ static inline void mavlink_msg_attitude_send_struct(mavlink_channel_t chan, cons
 
 #if MAVLINK_MSG_ID_ATTITUDE_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

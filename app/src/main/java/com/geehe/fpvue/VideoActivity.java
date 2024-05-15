@@ -27,6 +27,7 @@ import com.geehe.videonative.VideoPlayer;
 import com.geehe.wfbngrtl8812.WfbNGStats;
 import com.geehe.wfbngrtl8812.WfbNGStatsChanged;
 import com.geehe.wfbngrtl8812.WfbNgLink;
+import com.geehe.fpvue.osd.OSDManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,6 +44,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     private ActivityVideoBinding binding;
     protected DecodingInfo mDecodingInfo;
     int lastVideoW=0,lastVideoH=0;
+    private OSDManager osdManager;
 
     private static final String TAG = "com.geehe.fpvue";
     private static final String ACTION_USB_PERMISSION = "com.geehe.fpvue.USB_PERMISSION";
@@ -86,7 +88,10 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
          videoPlayerH265.setIVideoParamsChanged(this);
          binding.svH265.getHolder().addCallback(videoPlayerH265.configure1());
 
-         // Setup mavlink
+        osdManager = new OSDManager(this, binding);
+        osdManager.setUp();
+
+        // Setup mavlink
         MavlinkNative.nativeStart(this);
         Timer mavlinkTimer = new Timer();
         mavlinkTimer.schedule(new TimerTask() {
@@ -94,7 +99,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             public void run() {
                 MavlinkNative.nativeCallBack(VideoActivity.this);
             }
-        },0,1000);
+        },0,200);
 
         copyGSKey();
 
@@ -126,6 +131,13 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Save the checked states
+        osdManager.saveOSDConfig();
+    }
+
     protected void onStop() {
         MavlinkNative.nativeStop(this);
         try {
@@ -134,6 +146,8 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         Log.d(TAG, "onStop");
         StopWfbNg();
         super.onStop();
+        // Save the checked states
+        osdManager.saveOSDConfig();
     }
 
     protected void onResume() {
@@ -141,6 +155,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         StartVideoPlayer();
         StartWfbNg();
         super.onResume();
+        osdManager.restoreOSDConfig();
     }
 
     @Override
@@ -328,39 +343,12 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         return file.getAbsolutePath();
     }
 
-    public String formatDouble(double v, String unit, String prefix) {
-        if (v == 0 ) {
-            return "";
-        }
-        return String.format("%s%.2f%s", prefix, v,unit);
-    }
-    public String formatFloat(float v, String unit, String prefix) {
-        if (v == 0 ) {
-            return "";
-        }
-        return String.format("%s%.2f%s", prefix, v, unit);
-    }
-
     @Override
     public void onNewMavlinkData(MavlinkData data) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.d("va", "data.telemetryArm="+data.telemetryArm);
-                binding.tvTelembattery.setText(formatDouble(data.telemetryBattery/1000.0,"V", ""));
-                binding.tvTelemCurr.setText(formatDouble(data.telemetryCurrent/1000.0,"A",""));
-                binding.tvTelemCurrCons.setText(formatDouble(data.telemetryCurrentConsumed/1000.0,"A",""));
-                binding.tvTelemAltitude.setText(formatFloat(data.telemetryAltitude,"m","ALT:"));
-                binding.tvTelemDistance.setText(formatDouble(data.telemetryDistance,"m","DST:"));
-                binding.tvTelemgspeed.setText(formatFloat(data.telemetryGspeed,"m/s","GSPD:"));
-                binding.tvTelemvspeed.setText(formatFloat(data.telemetryVspeed,"m/s","VSPD:"));
-                binding.tvTelemThrottle.setText(String.format("%.0f", data.telemetryThrottle)+"%  \t");
-                binding.tvTelemRoll.setText(formatFloat(data.telemetryRoll,"",""));
-                binding.tvTelemPitch.setText(formatDouble(data.telemetryPitch,"",""));
-                binding.tvTelemArm.setText(data.telemetryArm > 1000 ? "Armed" : "");
-                binding.tvTelemHeading.setText(formatDouble(data.telemetryHdg,"","HDG:"));
-                binding.tvTelemLat.setText(formatDouble(data.telemetryLat,"","LAT:"));
-                binding.tvTelemLong.setText(formatDouble(data.telemetryLon,"","LON:"));
+                osdManager.render(data);
             }
         });
     }

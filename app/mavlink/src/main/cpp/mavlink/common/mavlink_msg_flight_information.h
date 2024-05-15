@@ -3,13 +3,13 @@
 
 #define MAVLINK_MSG_ID_FLIGHT_INFORMATION 264
 
-
+MAVPACKED(
 typedef struct __mavlink_flight_information_t {
  uint64_t arming_time_utc; /*< [us] Timestamp at arming (time since UNIX epoch) in UTC, 0 for unknown*/
  uint64_t takeoff_time_utc; /*< [us] Timestamp at takeoff (time since UNIX epoch) in UTC, 0 for unknown*/
  uint64_t flight_uuid; /*<  Universally unique identifier (UUID) of flight, should correspond to name of log files*/
  uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
-} mavlink_flight_information_t;
+}) mavlink_flight_information_t;
 
 #define MAVLINK_MSG_ID_FLIGHT_INFORMATION_LEN 28
 #define MAVLINK_MSG_ID_FLIGHT_INFORMATION_MIN_LEN 28
@@ -194,7 +194,7 @@ static inline void mavlink_msg_flight_information_send_struct(mavlink_channel_t 
 
 #if MAVLINK_MSG_ID_FLIGHT_INFORMATION_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

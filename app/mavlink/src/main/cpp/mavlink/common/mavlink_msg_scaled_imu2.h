@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_SCALED_IMU2 116
 
-
+MAVPACKED(
 typedef struct __mavlink_scaled_imu2_t {
  uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
  int16_t xacc; /*< [mG] X acceleration*/
@@ -12,15 +12,14 @@ typedef struct __mavlink_scaled_imu2_t {
  int16_t xgyro; /*< [mrad/s] Angular speed around X axis*/
  int16_t ygyro; /*< [mrad/s] Angular speed around Y axis*/
  int16_t zgyro; /*< [mrad/s] Angular speed around Z axis*/
- int16_t xmag; /*< [mgauss] X Magnetic field*/
- int16_t ymag; /*< [mgauss] Y Magnetic field*/
- int16_t zmag; /*< [mgauss] Z Magnetic field*/
- int16_t temperature; /*< [cdegC] Temperature, 0: IMU does not provide temperature values. If the IMU is at 0C it must send 1 (0.01C).*/
-} mavlink_scaled_imu2_t;
+ int16_t xmag; /*< [mT] X Magnetic field*/
+ int16_t ymag; /*< [mT] Y Magnetic field*/
+ int16_t zmag; /*< [mT] Z Magnetic field*/
+}) mavlink_scaled_imu2_t;
 
-#define MAVLINK_MSG_ID_SCALED_IMU2_LEN 24
+#define MAVLINK_MSG_ID_SCALED_IMU2_LEN 22
 #define MAVLINK_MSG_ID_SCALED_IMU2_MIN_LEN 22
-#define MAVLINK_MSG_ID_116_LEN 24
+#define MAVLINK_MSG_ID_116_LEN 22
 #define MAVLINK_MSG_ID_116_MIN_LEN 22
 
 #define MAVLINK_MSG_ID_SCALED_IMU2_CRC 76
@@ -32,7 +31,7 @@ typedef struct __mavlink_scaled_imu2_t {
 #define MAVLINK_MESSAGE_INFO_SCALED_IMU2 { \
     116, \
     "SCALED_IMU2", \
-    11, \
+    10, \
     {  { "time_boot_ms", NULL, MAVLINK_TYPE_UINT32_T, 0, 0, offsetof(mavlink_scaled_imu2_t, time_boot_ms) }, \
          { "xacc", NULL, MAVLINK_TYPE_INT16_T, 0, 4, offsetof(mavlink_scaled_imu2_t, xacc) }, \
          { "yacc", NULL, MAVLINK_TYPE_INT16_T, 0, 6, offsetof(mavlink_scaled_imu2_t, yacc) }, \
@@ -43,13 +42,12 @@ typedef struct __mavlink_scaled_imu2_t {
          { "xmag", NULL, MAVLINK_TYPE_INT16_T, 0, 16, offsetof(mavlink_scaled_imu2_t, xmag) }, \
          { "ymag", NULL, MAVLINK_TYPE_INT16_T, 0, 18, offsetof(mavlink_scaled_imu2_t, ymag) }, \
          { "zmag", NULL, MAVLINK_TYPE_INT16_T, 0, 20, offsetof(mavlink_scaled_imu2_t, zmag) }, \
-         { "temperature", NULL, MAVLINK_TYPE_INT16_T, 0, 22, offsetof(mavlink_scaled_imu2_t, temperature) }, \
          } \
 }
 #else
 #define MAVLINK_MESSAGE_INFO_SCALED_IMU2 { \
     "SCALED_IMU2", \
-    11, \
+    10, \
     {  { "time_boot_ms", NULL, MAVLINK_TYPE_UINT32_T, 0, 0, offsetof(mavlink_scaled_imu2_t, time_boot_ms) }, \
          { "xacc", NULL, MAVLINK_TYPE_INT16_T, 0, 4, offsetof(mavlink_scaled_imu2_t, xacc) }, \
          { "yacc", NULL, MAVLINK_TYPE_INT16_T, 0, 6, offsetof(mavlink_scaled_imu2_t, yacc) }, \
@@ -60,7 +58,6 @@ typedef struct __mavlink_scaled_imu2_t {
          { "xmag", NULL, MAVLINK_TYPE_INT16_T, 0, 16, offsetof(mavlink_scaled_imu2_t, xmag) }, \
          { "ymag", NULL, MAVLINK_TYPE_INT16_T, 0, 18, offsetof(mavlink_scaled_imu2_t, ymag) }, \
          { "zmag", NULL, MAVLINK_TYPE_INT16_T, 0, 20, offsetof(mavlink_scaled_imu2_t, zmag) }, \
-         { "temperature", NULL, MAVLINK_TYPE_INT16_T, 0, 22, offsetof(mavlink_scaled_imu2_t, temperature) }, \
          } \
 }
 #endif
@@ -78,14 +75,13 @@ typedef struct __mavlink_scaled_imu2_t {
  * @param xgyro [mrad/s] Angular speed around X axis
  * @param ygyro [mrad/s] Angular speed around Y axis
  * @param zgyro [mrad/s] Angular speed around Z axis
- * @param xmag [mgauss] X Magnetic field
- * @param ymag [mgauss] Y Magnetic field
- * @param zmag [mgauss] Z Magnetic field
- * @param temperature [cdegC] Temperature, 0: IMU does not provide temperature values. If the IMU is at 0C it must send 1 (0.01C).
+ * @param xmag [mT] X Magnetic field
+ * @param ymag [mT] Y Magnetic field
+ * @param zmag [mT] Z Magnetic field
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_scaled_imu2_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-                               uint32_t time_boot_ms, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag, int16_t temperature)
+                               uint32_t time_boot_ms, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_SCALED_IMU2_LEN];
@@ -99,7 +95,6 @@ static inline uint16_t mavlink_msg_scaled_imu2_pack(uint8_t system_id, uint8_t c
     _mav_put_int16_t(buf, 16, xmag);
     _mav_put_int16_t(buf, 18, ymag);
     _mav_put_int16_t(buf, 20, zmag);
-    _mav_put_int16_t(buf, 22, temperature);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SCALED_IMU2_LEN);
 #else
@@ -114,7 +109,6 @@ static inline uint16_t mavlink_msg_scaled_imu2_pack(uint8_t system_id, uint8_t c
     packet.xmag = xmag;
     packet.ymag = ymag;
     packet.zmag = zmag;
-    packet.temperature = temperature;
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SCALED_IMU2_LEN);
 #endif
@@ -136,15 +130,14 @@ static inline uint16_t mavlink_msg_scaled_imu2_pack(uint8_t system_id, uint8_t c
  * @param xgyro [mrad/s] Angular speed around X axis
  * @param ygyro [mrad/s] Angular speed around Y axis
  * @param zgyro [mrad/s] Angular speed around Z axis
- * @param xmag [mgauss] X Magnetic field
- * @param ymag [mgauss] Y Magnetic field
- * @param zmag [mgauss] Z Magnetic field
- * @param temperature [cdegC] Temperature, 0: IMU does not provide temperature values. If the IMU is at 0C it must send 1 (0.01C).
+ * @param xmag [mT] X Magnetic field
+ * @param ymag [mT] Y Magnetic field
+ * @param zmag [mT] Z Magnetic field
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_scaled_imu2_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
                                mavlink_message_t* msg,
-                                   uint32_t time_boot_ms,int16_t xacc,int16_t yacc,int16_t zacc,int16_t xgyro,int16_t ygyro,int16_t zgyro,int16_t xmag,int16_t ymag,int16_t zmag,int16_t temperature)
+                                   uint32_t time_boot_ms,int16_t xacc,int16_t yacc,int16_t zacc,int16_t xgyro,int16_t ygyro,int16_t zgyro,int16_t xmag,int16_t ymag,int16_t zmag)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_SCALED_IMU2_LEN];
@@ -158,7 +151,6 @@ static inline uint16_t mavlink_msg_scaled_imu2_pack_chan(uint8_t system_id, uint
     _mav_put_int16_t(buf, 16, xmag);
     _mav_put_int16_t(buf, 18, ymag);
     _mav_put_int16_t(buf, 20, zmag);
-    _mav_put_int16_t(buf, 22, temperature);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SCALED_IMU2_LEN);
 #else
@@ -173,7 +165,6 @@ static inline uint16_t mavlink_msg_scaled_imu2_pack_chan(uint8_t system_id, uint
     packet.xmag = xmag;
     packet.ymag = ymag;
     packet.zmag = zmag;
-    packet.temperature = temperature;
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SCALED_IMU2_LEN);
 #endif
@@ -192,7 +183,7 @@ static inline uint16_t mavlink_msg_scaled_imu2_pack_chan(uint8_t system_id, uint
  */
 static inline uint16_t mavlink_msg_scaled_imu2_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_scaled_imu2_t* scaled_imu2)
 {
-    return mavlink_msg_scaled_imu2_pack(system_id, component_id, msg, scaled_imu2->time_boot_ms, scaled_imu2->xacc, scaled_imu2->yacc, scaled_imu2->zacc, scaled_imu2->xgyro, scaled_imu2->ygyro, scaled_imu2->zgyro, scaled_imu2->xmag, scaled_imu2->ymag, scaled_imu2->zmag, scaled_imu2->temperature);
+    return mavlink_msg_scaled_imu2_pack(system_id, component_id, msg, scaled_imu2->time_boot_ms, scaled_imu2->xacc, scaled_imu2->yacc, scaled_imu2->zacc, scaled_imu2->xgyro, scaled_imu2->ygyro, scaled_imu2->zgyro, scaled_imu2->xmag, scaled_imu2->ymag, scaled_imu2->zmag);
 }
 
 /**
@@ -206,7 +197,7 @@ static inline uint16_t mavlink_msg_scaled_imu2_encode(uint8_t system_id, uint8_t
  */
 static inline uint16_t mavlink_msg_scaled_imu2_encode_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const mavlink_scaled_imu2_t* scaled_imu2)
 {
-    return mavlink_msg_scaled_imu2_pack_chan(system_id, component_id, chan, msg, scaled_imu2->time_boot_ms, scaled_imu2->xacc, scaled_imu2->yacc, scaled_imu2->zacc, scaled_imu2->xgyro, scaled_imu2->ygyro, scaled_imu2->zgyro, scaled_imu2->xmag, scaled_imu2->ymag, scaled_imu2->zmag, scaled_imu2->temperature);
+    return mavlink_msg_scaled_imu2_pack_chan(system_id, component_id, chan, msg, scaled_imu2->time_boot_ms, scaled_imu2->xacc, scaled_imu2->yacc, scaled_imu2->zacc, scaled_imu2->xgyro, scaled_imu2->ygyro, scaled_imu2->zgyro, scaled_imu2->xmag, scaled_imu2->ymag, scaled_imu2->zmag);
 }
 
 /**
@@ -220,14 +211,13 @@ static inline uint16_t mavlink_msg_scaled_imu2_encode_chan(uint8_t system_id, ui
  * @param xgyro [mrad/s] Angular speed around X axis
  * @param ygyro [mrad/s] Angular speed around Y axis
  * @param zgyro [mrad/s] Angular speed around Z axis
- * @param xmag [mgauss] X Magnetic field
- * @param ymag [mgauss] Y Magnetic field
- * @param zmag [mgauss] Z Magnetic field
- * @param temperature [cdegC] Temperature, 0: IMU does not provide temperature values. If the IMU is at 0C it must send 1 (0.01C).
+ * @param xmag [mT] X Magnetic field
+ * @param ymag [mT] Y Magnetic field
+ * @param zmag [mT] Z Magnetic field
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_scaled_imu2_send(mavlink_channel_t chan, uint32_t time_boot_ms, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag, int16_t temperature)
+static inline void mavlink_msg_scaled_imu2_send(mavlink_channel_t chan, uint32_t time_boot_ms, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_SCALED_IMU2_LEN];
@@ -241,7 +231,6 @@ static inline void mavlink_msg_scaled_imu2_send(mavlink_channel_t chan, uint32_t
     _mav_put_int16_t(buf, 16, xmag);
     _mav_put_int16_t(buf, 18, ymag);
     _mav_put_int16_t(buf, 20, zmag);
-    _mav_put_int16_t(buf, 22, temperature);
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SCALED_IMU2, buf, MAVLINK_MSG_ID_SCALED_IMU2_MIN_LEN, MAVLINK_MSG_ID_SCALED_IMU2_LEN, MAVLINK_MSG_ID_SCALED_IMU2_CRC);
 #else
@@ -256,7 +245,6 @@ static inline void mavlink_msg_scaled_imu2_send(mavlink_channel_t chan, uint32_t
     packet.xmag = xmag;
     packet.ymag = ymag;
     packet.zmag = zmag;
-    packet.temperature = temperature;
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SCALED_IMU2, (const char *)&packet, MAVLINK_MSG_ID_SCALED_IMU2_MIN_LEN, MAVLINK_MSG_ID_SCALED_IMU2_LEN, MAVLINK_MSG_ID_SCALED_IMU2_CRC);
 #endif
@@ -270,7 +258,7 @@ static inline void mavlink_msg_scaled_imu2_send(mavlink_channel_t chan, uint32_t
 static inline void mavlink_msg_scaled_imu2_send_struct(mavlink_channel_t chan, const mavlink_scaled_imu2_t* scaled_imu2)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-    mavlink_msg_scaled_imu2_send(chan, scaled_imu2->time_boot_ms, scaled_imu2->xacc, scaled_imu2->yacc, scaled_imu2->zacc, scaled_imu2->xgyro, scaled_imu2->ygyro, scaled_imu2->zgyro, scaled_imu2->xmag, scaled_imu2->ymag, scaled_imu2->zmag, scaled_imu2->temperature);
+    mavlink_msg_scaled_imu2_send(chan, scaled_imu2->time_boot_ms, scaled_imu2->xacc, scaled_imu2->yacc, scaled_imu2->zacc, scaled_imu2->xgyro, scaled_imu2->ygyro, scaled_imu2->zgyro, scaled_imu2->xmag, scaled_imu2->ymag, scaled_imu2->zmag);
 #else
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SCALED_IMU2, (const char *)scaled_imu2, MAVLINK_MSG_ID_SCALED_IMU2_MIN_LEN, MAVLINK_MSG_ID_SCALED_IMU2_LEN, MAVLINK_MSG_ID_SCALED_IMU2_CRC);
 #endif
@@ -278,13 +266,13 @@ static inline void mavlink_msg_scaled_imu2_send_struct(mavlink_channel_t chan, c
 
 #if MAVLINK_MSG_ID_SCALED_IMU2_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an
   incoming message with minimum stack space usage.
  */
-static inline void mavlink_msg_scaled_imu2_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint32_t time_boot_ms, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag, int16_t temperature)
+static inline void mavlink_msg_scaled_imu2_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint32_t time_boot_ms, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char *buf = (char *)msgbuf;
@@ -298,7 +286,6 @@ static inline void mavlink_msg_scaled_imu2_send_buf(mavlink_message_t *msgbuf, m
     _mav_put_int16_t(buf, 16, xmag);
     _mav_put_int16_t(buf, 18, ymag);
     _mav_put_int16_t(buf, 20, zmag);
-    _mav_put_int16_t(buf, 22, temperature);
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SCALED_IMU2, buf, MAVLINK_MSG_ID_SCALED_IMU2_MIN_LEN, MAVLINK_MSG_ID_SCALED_IMU2_LEN, MAVLINK_MSG_ID_SCALED_IMU2_CRC);
 #else
@@ -313,7 +300,6 @@ static inline void mavlink_msg_scaled_imu2_send_buf(mavlink_message_t *msgbuf, m
     packet->xmag = xmag;
     packet->ymag = ymag;
     packet->zmag = zmag;
-    packet->temperature = temperature;
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SCALED_IMU2, (const char *)packet, MAVLINK_MSG_ID_SCALED_IMU2_MIN_LEN, MAVLINK_MSG_ID_SCALED_IMU2_LEN, MAVLINK_MSG_ID_SCALED_IMU2_CRC);
 #endif
@@ -398,7 +384,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_zgyro(const mavlink_message_t*
 /**
  * @brief Get field xmag from scaled_imu2 message
  *
- * @return [mgauss] X Magnetic field
+ * @return [mT] X Magnetic field
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_xmag(const mavlink_message_t* msg)
 {
@@ -408,7 +394,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_xmag(const mavlink_message_t* 
 /**
  * @brief Get field ymag from scaled_imu2 message
  *
- * @return [mgauss] Y Magnetic field
+ * @return [mT] Y Magnetic field
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_ymag(const mavlink_message_t* msg)
 {
@@ -418,21 +404,11 @@ static inline int16_t mavlink_msg_scaled_imu2_get_ymag(const mavlink_message_t* 
 /**
  * @brief Get field zmag from scaled_imu2 message
  *
- * @return [mgauss] Z Magnetic field
+ * @return [mT] Z Magnetic field
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_zmag(const mavlink_message_t* msg)
 {
     return _MAV_RETURN_int16_t(msg,  20);
-}
-
-/**
- * @brief Get field temperature from scaled_imu2 message
- *
- * @return [cdegC] Temperature, 0: IMU does not provide temperature values. If the IMU is at 0C it must send 1 (0.01C).
- */
-static inline int16_t mavlink_msg_scaled_imu2_get_temperature(const mavlink_message_t* msg)
-{
-    return _MAV_RETURN_int16_t(msg,  22);
 }
 
 /**
@@ -454,7 +430,6 @@ static inline void mavlink_msg_scaled_imu2_decode(const mavlink_message_t* msg, 
     scaled_imu2->xmag = mavlink_msg_scaled_imu2_get_xmag(msg);
     scaled_imu2->ymag = mavlink_msg_scaled_imu2_get_ymag(msg);
     scaled_imu2->zmag = mavlink_msg_scaled_imu2_get_zmag(msg);
-    scaled_imu2->temperature = mavlink_msg_scaled_imu2_get_temperature(msg);
 #else
         uint8_t len = msg->len < MAVLINK_MSG_ID_SCALED_IMU2_LEN? msg->len : MAVLINK_MSG_ID_SCALED_IMU2_LEN;
         memset(scaled_imu2, 0, MAVLINK_MSG_ID_SCALED_IMU2_LEN);

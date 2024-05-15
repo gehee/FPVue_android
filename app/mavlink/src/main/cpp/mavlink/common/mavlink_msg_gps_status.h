@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_GPS_STATUS 25
 
-
+MAVPACKED(
 typedef struct __mavlink_gps_status_t {
  uint8_t satellites_visible; /*<  Number of satellites visible*/
  uint8_t satellite_prn[20]; /*<  Global satellite ID*/
@@ -11,7 +11,7 @@ typedef struct __mavlink_gps_status_t {
  uint8_t satellite_elevation[20]; /*< [deg] Elevation (0: right on top of receiver, 90: on the horizon) of satellite*/
  uint8_t satellite_azimuth[20]; /*< [deg] Direction of satellite, 0: 0 deg, 255: 360 deg.*/
  uint8_t satellite_snr[20]; /*< [dB] Signal to noise ratio of satellite*/
-} mavlink_gps_status_t;
+}) mavlink_gps_status_t;
 
 #define MAVLINK_MSG_ID_GPS_STATUS_LEN 101
 #define MAVLINK_MSG_ID_GPS_STATUS_MIN_LEN 101
@@ -216,7 +216,7 @@ static inline void mavlink_msg_gps_status_send_struct(mavlink_channel_t chan, co
 
 #if MAVLINK_MSG_ID_GPS_STATUS_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

@@ -3,11 +3,11 @@
 
 #define MAVLINK_MSG_ID_SYSTEM_TIME 2
 
-
+MAVPACKED(
 typedef struct __mavlink_system_time_t {
  uint64_t time_unix_usec; /*< [us] Timestamp (UNIX epoch time).*/
  uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
-} mavlink_system_time_t;
+}) mavlink_system_time_t;
 
 #define MAVLINK_MSG_ID_SYSTEM_TIME_LEN 12
 #define MAVLINK_MSG_ID_SYSTEM_TIME_MIN_LEN 12
@@ -170,7 +170,7 @@ static inline void mavlink_msg_system_time_send_struct(mavlink_channel_t chan, c
 
 #if MAVLINK_MSG_ID_SYSTEM_TIME_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

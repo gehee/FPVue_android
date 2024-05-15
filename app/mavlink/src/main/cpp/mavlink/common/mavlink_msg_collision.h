@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_COLLISION 247
 
-
+MAVPACKED(
 typedef struct __mavlink_collision_t {
  uint32_t id; /*<  Unique identifier, domain based on src field*/
  float time_to_minimum_delta; /*< [s] Estimated time until collision occurs*/
@@ -12,7 +12,7 @@ typedef struct __mavlink_collision_t {
  uint8_t src; /*<  Collision data source*/
  uint8_t action; /*<  Action that is being taken to avoid this collision*/
  uint8_t threat_level; /*<  How concerned the aircraft is about this collision*/
-} mavlink_collision_t;
+}) mavlink_collision_t;
 
 #define MAVLINK_MSG_ID_COLLISION_LEN 19
 #define MAVLINK_MSG_ID_COLLISION_MIN_LEN 19
@@ -230,7 +230,7 @@ static inline void mavlink_msg_collision_send_struct(mavlink_channel_t chan, con
 
 #if MAVLINK_MSG_ID_COLLISION_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

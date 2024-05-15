@@ -3,14 +3,14 @@
 
 #define MAVLINK_MSG_ID_LOG_REQUEST_DATA 119
 
-
+MAVPACKED(
 typedef struct __mavlink_log_request_data_t {
  uint32_t ofs; /*<  Offset into the log*/
  uint32_t count; /*< [bytes] Number of bytes*/
  uint16_t id; /*<  Log id (from LOG_ENTRY reply)*/
  uint8_t target_system; /*<  System ID*/
  uint8_t target_component; /*<  Component ID*/
-} mavlink_log_request_data_t;
+}) mavlink_log_request_data_t;
 
 #define MAVLINK_MSG_ID_LOG_REQUEST_DATA_LEN 12
 #define MAVLINK_MSG_ID_LOG_REQUEST_DATA_MIN_LEN 12
@@ -206,7 +206,7 @@ static inline void mavlink_msg_log_request_data_send_struct(mavlink_channel_t ch
 
 #if MAVLINK_MSG_ID_LOG_REQUEST_DATA_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

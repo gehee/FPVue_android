@@ -3,13 +3,13 @@
 
 #define MAVLINK_MSG_ID_MEMORY_VECT 249
 
-
+MAVPACKED(
 typedef struct __mavlink_memory_vect_t {
  uint16_t address; /*<  Starting address of the debug variables*/
  uint8_t ver; /*<  Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below*/
  uint8_t type; /*<  Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14*/
  int8_t value[32]; /*<  Memory contents at specified address*/
-} mavlink_memory_vect_t;
+}) mavlink_memory_vect_t;
 
 #define MAVLINK_MSG_ID_MEMORY_VECT_LEN 36
 #define MAVLINK_MSG_ID_MEMORY_VECT_MIN_LEN 36
@@ -188,7 +188,7 @@ static inline void mavlink_msg_memory_vect_send_struct(mavlink_channel_t chan, c
 
 #if MAVLINK_MSG_ID_MEMORY_VECT_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

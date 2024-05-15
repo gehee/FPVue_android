@@ -3,11 +3,11 @@
 
 #define MAVLINK_MSG_ID_LOG_ERASE 121
 
-
+MAVPACKED(
 typedef struct __mavlink_log_erase_t {
  uint8_t target_system; /*<  System ID*/
  uint8_t target_component; /*<  Component ID*/
-} mavlink_log_erase_t;
+}) mavlink_log_erase_t;
 
 #define MAVLINK_MSG_ID_LOG_ERASE_LEN 2
 #define MAVLINK_MSG_ID_LOG_ERASE_MIN_LEN 2
@@ -170,7 +170,7 @@ static inline void mavlink_msg_log_erase_send_struct(mavlink_channel_t chan, con
 
 #if MAVLINK_MSG_ID_LOG_ERASE_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

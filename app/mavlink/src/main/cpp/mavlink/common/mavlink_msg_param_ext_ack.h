@@ -3,13 +3,13 @@
 
 #define MAVLINK_MSG_ID_PARAM_EXT_ACK 324
 
-
+MAVPACKED(
 typedef struct __mavlink_param_ext_ack_t {
  char param_id[16]; /*<  Parameter id, terminated by NULL if the length is less than 16 human-readable chars and WITHOUT null termination (NULL) byte if the length is exactly 16 chars - applications have to provide 16+1 bytes storage if the ID is stored as string*/
  char param_value[128]; /*<  Parameter value (new value if PARAM_ACK_ACCEPTED, current value otherwise)*/
  uint8_t param_type; /*<  Parameter type.*/
  uint8_t param_result; /*<  Result code.*/
-} mavlink_param_ext_ack_t;
+}) mavlink_param_ext_ack_t;
 
 #define MAVLINK_MSG_ID_PARAM_EXT_ACK_LEN 146
 #define MAVLINK_MSG_ID_PARAM_EXT_ACK_MIN_LEN 146
@@ -189,7 +189,7 @@ static inline void mavlink_msg_param_ext_ack_send_struct(mavlink_channel_t chan,
 
 #if MAVLINK_MSG_ID_PARAM_EXT_ACK_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an
