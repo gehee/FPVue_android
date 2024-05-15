@@ -3,13 +3,13 @@
 
 #define MAVLINK_MSG_ID_PLAY_TUNE 258
 
-
+MAVPACKED(
 typedef struct __mavlink_play_tune_t {
  uint8_t target_system; /*<  System ID*/
  uint8_t target_component; /*<  Component ID*/
  char tune[30]; /*<  tune in board specific format*/
  char tune2[200]; /*<  tune extension (appended to tune)*/
-} mavlink_play_tune_t;
+}) mavlink_play_tune_t;
 
 #define MAVLINK_MSG_ID_PLAY_TUNE_LEN 232
 #define MAVLINK_MSG_ID_PLAY_TUNE_MIN_LEN 32
@@ -189,7 +189,7 @@ static inline void mavlink_msg_play_tune_send_struct(mavlink_channel_t chan, con
 
 #if MAVLINK_MSG_ID_PLAY_TUNE_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

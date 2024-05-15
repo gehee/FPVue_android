@@ -3,13 +3,13 @@
 
 #define MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL 5
 
-
+MAVPACKED(
 typedef struct __mavlink_change_operator_control_t {
  uint8_t target_system; /*<  System the GCS requests control for*/
  uint8_t control_request; /*<  0: request control of this MAV, 1: Release control of this MAV*/
  uint8_t version; /*< [rad] 0: key as plaintext, 1-255: future, different hashing/encryption variants. The GCS should in general use the safest mode possible initially and then gradually move down the encryption level if it gets a NACK message indicating an encryption mismatch.*/
  char passkey[25]; /*<  Password / Key, depending on version plaintext or encrypted. 25 or less characters, NULL terminated. The characters may involve A-Z, a-z, 0-9, and "!?,.-"*/
-} mavlink_change_operator_control_t;
+}) mavlink_change_operator_control_t;
 
 #define MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_LEN 28
 #define MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_MIN_LEN 28
@@ -188,7 +188,7 @@ static inline void mavlink_msg_change_operator_control_send_struct(mavlink_chann
 
 #if MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

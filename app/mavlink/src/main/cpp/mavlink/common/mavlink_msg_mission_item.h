@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_MISSION_ITEM 39
 
-
+MAVPACKED(
 typedef struct __mavlink_mission_item_t {
  float param1; /*<  PARAM1, see MAV_CMD enum*/
  float param2; /*<  PARAM2, see MAV_CMD enum*/
@@ -18,9 +18,9 @@ typedef struct __mavlink_mission_item_t {
  uint8_t target_component; /*<  Component ID*/
  uint8_t frame; /*<  The coordinate system of the waypoint.*/
  uint8_t current; /*<  false:0, true:1*/
- uint8_t autocontinue; /*<  Autocontinue to next waypoint. 0: false, 1: true. Set false to pause mission after the item completes.*/
+ uint8_t autocontinue; /*<  Autocontinue to next waypoint*/
  uint8_t mission_type; /*<  Mission type.*/
-} mavlink_mission_item_t;
+}) mavlink_mission_item_t;
 
 #define MAVLINK_MSG_ID_MISSION_ITEM_LEN 38
 #define MAVLINK_MSG_ID_MISSION_ITEM_MIN_LEN 37
@@ -89,7 +89,7 @@ typedef struct __mavlink_mission_item_t {
  * @param frame  The coordinate system of the waypoint.
  * @param command  The scheduled action for the waypoint.
  * @param current  false:0, true:1
- * @param autocontinue  Autocontinue to next waypoint. 0: false, 1: true. Set false to pause mission after the item completes.
+ * @param autocontinue  Autocontinue to next waypoint
  * @param param1  PARAM1, see MAV_CMD enum
  * @param param2  PARAM2, see MAV_CMD enum
  * @param param3  PARAM3, see MAV_CMD enum
@@ -159,7 +159,7 @@ static inline uint16_t mavlink_msg_mission_item_pack(uint8_t system_id, uint8_t 
  * @param frame  The coordinate system of the waypoint.
  * @param command  The scheduled action for the waypoint.
  * @param current  false:0, true:1
- * @param autocontinue  Autocontinue to next waypoint. 0: false, 1: true. Set false to pause mission after the item completes.
+ * @param autocontinue  Autocontinue to next waypoint
  * @param param1  PARAM1, see MAV_CMD enum
  * @param param2  PARAM2, see MAV_CMD enum
  * @param param3  PARAM3, see MAV_CMD enum
@@ -255,7 +255,7 @@ static inline uint16_t mavlink_msg_mission_item_encode_chan(uint8_t system_id, u
  * @param frame  The coordinate system of the waypoint.
  * @param command  The scheduled action for the waypoint.
  * @param current  false:0, true:1
- * @param autocontinue  Autocontinue to next waypoint. 0: false, 1: true. Set false to pause mission after the item completes.
+ * @param autocontinue  Autocontinue to next waypoint
  * @param param1  PARAM1, see MAV_CMD enum
  * @param param2  PARAM2, see MAV_CMD enum
  * @param param3  PARAM3, see MAV_CMD enum
@@ -326,7 +326,7 @@ static inline void mavlink_msg_mission_item_send_struct(mavlink_channel_t chan, 
 
 #if MAVLINK_MSG_ID_MISSION_ITEM_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an
@@ -444,7 +444,7 @@ static inline uint8_t mavlink_msg_mission_item_get_current(const mavlink_message
 /**
  * @brief Get field autocontinue from mission_item message
  *
- * @return  Autocontinue to next waypoint. 0: false, 1: true. Set false to pause mission after the item completes.
+ * @return  Autocontinue to next waypoint
  */
 static inline uint8_t mavlink_msg_mission_item_get_autocontinue(const mavlink_message_t* msg)
 {

@@ -3,10 +3,10 @@
 
 #define MAVLINK_MSG_ID_AUTH_KEY 7
 
-
+MAVPACKED(
 typedef struct __mavlink_auth_key_t {
  char key[32]; /*<  key*/
-} mavlink_auth_key_t;
+}) mavlink_auth_key_t;
 
 #define MAVLINK_MSG_ID_AUTH_KEY_LEN 32
 #define MAVLINK_MSG_ID_AUTH_KEY_MIN_LEN 32
@@ -158,7 +158,7 @@ static inline void mavlink_msg_auth_key_send_struct(mavlink_channel_t chan, cons
 
 #if MAVLINK_MSG_ID_AUTH_KEY_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

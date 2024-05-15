@@ -3,13 +3,13 @@
 
 #define MAVLINK_MSG_ID_TERRAIN_REQUEST 133
 
-
+MAVPACKED(
 typedef struct __mavlink_terrain_request_t {
  uint64_t mask; /*<  Bitmask of requested 4x4 grids (row major 8x7 array of grids, 56 bits)*/
  int32_t lat; /*< [degE7] Latitude of SW corner of first grid*/
  int32_t lon; /*< [degE7] Longitude of SW corner of first grid*/
  uint16_t grid_spacing; /*< [m] Grid spacing*/
-} mavlink_terrain_request_t;
+}) mavlink_terrain_request_t;
 
 #define MAVLINK_MSG_ID_TERRAIN_REQUEST_LEN 18
 #define MAVLINK_MSG_ID_TERRAIN_REQUEST_MIN_LEN 18
@@ -194,7 +194,7 @@ static inline void mavlink_msg_terrain_request_send_struct(mavlink_channel_t cha
 
 #if MAVLINK_MSG_ID_TERRAIN_REQUEST_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

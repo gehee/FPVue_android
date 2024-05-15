@@ -3,14 +3,14 @@
 
 #define MAVLINK_MSG_ID_PARAM_SET 23
 
-
+MAVPACKED(
 typedef struct __mavlink_param_set_t {
  float param_value; /*<  Onboard parameter value*/
  uint8_t target_system; /*<  System ID*/
  uint8_t target_component; /*<  Component ID*/
  char param_id[16]; /*<  Onboard parameter id, terminated by NULL if the length is less than 16 human-readable chars and WITHOUT null termination (NULL) byte if the length is exactly 16 chars - applications have to provide 16+1 bytes storage if the ID is stored as string*/
  uint8_t param_type; /*<  Onboard parameter type.*/
-} mavlink_param_set_t;
+}) mavlink_param_set_t;
 
 #define MAVLINK_MSG_ID_PARAM_SET_LEN 23
 #define MAVLINK_MSG_ID_PARAM_SET_MIN_LEN 23
@@ -200,7 +200,7 @@ static inline void mavlink_msg_param_set_send_struct(mavlink_channel_t chan, con
 
 #if MAVLINK_MSG_ID_PARAM_SET_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

@@ -3,11 +3,11 @@
 
 #define MAVLINK_MSG_ID_EXTENDED_SYS_STATE 245
 
-
+MAVPACKED(
 typedef struct __mavlink_extended_sys_state_t {
  uint8_t vtol_state; /*<  The VTOL state if applicable. Is set to MAV_VTOL_STATE_UNDEFINED if UAV is not in VTOL configuration.*/
  uint8_t landed_state; /*<  The landed state. Is set to MAV_LANDED_STATE_UNDEFINED if landed state is unknown.*/
-} mavlink_extended_sys_state_t;
+}) mavlink_extended_sys_state_t;
 
 #define MAVLINK_MSG_ID_EXTENDED_SYS_STATE_LEN 2
 #define MAVLINK_MSG_ID_EXTENDED_SYS_STATE_MIN_LEN 2
@@ -170,7 +170,7 @@ static inline void mavlink_msg_extended_sys_state_send_struct(mavlink_channel_t 
 
 #if MAVLINK_MSG_ID_EXTENDED_SYS_STATE_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

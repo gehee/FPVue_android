@@ -3,12 +3,12 @@
 
 #define MAVLINK_MSG_ID_DATA_STREAM 67
 
-
+MAVPACKED(
 typedef struct __mavlink_data_stream_t {
  uint16_t message_rate; /*< [Hz] The message rate*/
  uint8_t stream_id; /*<  The ID of the requested data stream*/
  uint8_t on_off; /*<  1 stream is enabled, 0 stream is stopped.*/
-} mavlink_data_stream_t;
+}) mavlink_data_stream_t;
 
 #define MAVLINK_MSG_ID_DATA_STREAM_LEN 4
 #define MAVLINK_MSG_ID_DATA_STREAM_MIN_LEN 4
@@ -182,7 +182,7 @@ static inline void mavlink_msg_data_stream_send_struct(mavlink_channel_t chan, c
 
 #if MAVLINK_MSG_ID_DATA_STREAM_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an

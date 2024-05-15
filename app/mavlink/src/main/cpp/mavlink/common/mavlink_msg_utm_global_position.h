@@ -3,7 +3,7 @@
 
 #define MAVLINK_MSG_ID_UTM_GLOBAL_POSITION 340
 
-
+MAVPACKED(
 typedef struct __mavlink_utm_global_position_t {
  uint64_t time; /*< [us] Time of applicability of position (microseconds since UNIX epoch).*/
  int32_t lat; /*< [degE7] Latitude (WGS84)*/
@@ -23,7 +23,7 @@ typedef struct __mavlink_utm_global_position_t {
  uint8_t uas_id[18]; /*<  Unique UAS ID.*/
  uint8_t flight_state; /*<  Flight state*/
  uint8_t flags; /*<  Bitwise OR combination of the data available flags.*/
-} mavlink_utm_global_position_t;
+}) mavlink_utm_global_position_t;
 
 #define MAVLINK_MSG_ID_UTM_GLOBAL_POSITION_LEN 70
 #define MAVLINK_MSG_ID_UTM_GLOBAL_POSITION_MIN_LEN 70
@@ -356,7 +356,7 @@ static inline void mavlink_msg_utm_global_position_send_struct(mavlink_channel_t
 
 #if MAVLINK_MSG_ID_UTM_GLOBAL_POSITION_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This variant of _send() can be used to save stack space by re-using
+  This varient of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an
