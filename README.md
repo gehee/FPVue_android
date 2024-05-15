@@ -25,3 +25,8 @@ This project can be open in android studio and built from there.
 1. Download apk from https://github.com/gehee/FPVue_android/releases.
 2. Run `adb install FPVue_android_0.14.1.apk` from the command line.
 3. Download [gs.key](https://github.com/gehee/FPVue_android/raw/main/app/src/main/assets/gs.key), rename it to drone.key and copy it on the air side.
+
+## OSD feature.
+- Press OSD Config to show/hide items. At the first time, items will appear at left top corner and overlap each other, let's drag and drop them at where you want.
+- Lock/Unlock: If this checkbox is checked, items will not able to move/arrange, so uncheck it to arrange on screen, then locking them.
+- Almost OSD items work but has not tested yet (Total distance was NOT implemented)
