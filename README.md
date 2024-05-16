@@ -27,6 +27,6 @@ This project can be open in android studio and built from there.
 3. Download [gs.key](https://github.com/gehee/FPVue_android/raw/main/app/src/main/assets/gs.key), rename it to drone.key and copy it on the air side.
 
 ## OSD feature.
-- Press OSD Config to show/hide items. At the first time, items will appear at left top corner and overlap each other, let's drag and drop them at where you want.
-- Lock/Unlock: If this checkbox is checked, items will not able to move/arrange, so uncheck it to arrange on screen, then locking them.
-- Almost OSD items work but has not tested yet (Total distance was NOT implemented)
+- Press OSD Config to show/hide items. At first, items will all appear at the top left corner. They can be drag and dropped to the desired position.
+- Lock/Unlock: if this is checked, items are locked and are not moveable. Uncheck to be able to arrange them on screen before locking again once you are satisfied with the OSD items position.
+- Most OSD items have been implemented but not all of them have been tested. (Total distance has not been implemented yet)
