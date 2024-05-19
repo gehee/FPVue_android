@@ -358,9 +358,9 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             public void run() {
                 binding.tvMessage.setVisibility(View.INVISIBLE);
                 if (decodingInfo.currentKiloBitsPerSecond > 1000) {
-                    binding.tvVideoInfo.setText(String.format("%dx%d@%.0f   %.1f Mbps   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond/1000, decodingInfo.avgTotalDecodingTime_ms));
+                    binding.tvVideoStats.setText(String.format("%dx%d@%.0f   %.1f Mbps   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond/1000, decodingInfo.avgTotalDecodingTime_ms));
                 } else {
-                    binding.tvVideoInfo.setText(String.format("%dx%d@%.0f   %.1f Kpbs   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond, decodingInfo.avgTotalDecodingTime_ms));
+                    binding.tvVideoStats.setText(String.format("%dx%d@%.0f   %.1f Kpbs   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond, decodingInfo.avgTotalDecodingTime_ms));
                 }
             }
         });
@@ -376,15 +376,15 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 if (data.count_p_all > 0) {
                     int perr = data.count_p_dec_err;
                     if (perr > 0) {
-                        binding.tvWFBNGStatus.setText("Waiting for session key.");
+                        binding.tvLinkStatus.setText("Waiting for session key.");
                     } else {
-                        binding.tvWFBNGStatus.setText(String.format("lost=%d\t\trec=%d\t\tok=%d",
+                        binding.tvLinkStatus.setText(String.format("lost=%d\t\trec=%d\t\tok=%d",
                                 data.count_p_lost,
                                 data.count_p_fec_recovered ,
                                 data.count_p_outgoing));
                     }
                 } else {
-                    binding.tvWFBNGStatus.setText("No wfb-ng data.");
+                    binding.tvLinkStatus.setText("No wfb-ng data.");
                 }
             }
         });

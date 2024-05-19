@@ -63,8 +63,8 @@ public class MovableLayout extends LinearLayout {
     }
 
     public void restorePosition() {
-        float x = preferences.getFloat(getId() + "_x", 0);
-        float y = preferences.getFloat(getId() + "_y", 0);
+        float x = preferences.getFloat(getId() + "_x", 100);
+        float y = preferences.getFloat(getId() + "_y", 100);
         setX(x);
         setY(y);
     }

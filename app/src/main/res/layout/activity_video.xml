@@ -12,22 +12,100 @@
     tools:context="com.geehe.fpvue.VideoActivity">
 
 
+    <SurfaceView
+        android:id="@+id/sv_h265"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <SurfaceView
+        android:id="@+id/sv_h264"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnSettings"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:icon="@drawable/baseline_settings_24"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Loading...."
+        android:textColor="@color/colorWhite"
+        android:translationZ="10dp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.5"
+        tools:ignore="HardcodedText"/>
+
+
     <FrameLayout
         android:id="@+id/osdLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:paddingLeft="16dp"
-        android:paddingTop="16dp"
-        android:paddingRight="16dp"
         android:translationZ="15dp"
-        app:layout_constraintBottom_toTopOf="@+id/statBar"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0"
-        tools:visibility="gone">
+        app:layout_constraintVertical_bias="1.0">
+
+        <com.geehe.fpvue.osd.MovableLayout
+            android:id="@+id/itemVideoStats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <TextView
+                android:id="@+id/tvVideoStats"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginStart="5dp"
+                android:gravity="start|center_vertical"
+                android:text="Video Stats"
+                android:textColor="@color/colorWhite"
+                android:textSize="14sp" />
+        </com.geehe.fpvue.osd.MovableLayout>
+
+        <com.geehe.fpvue.osd.MovableLayout
+            android:id="@+id/itemLinkStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <TextView
+                android:id="@+id/tvLinkStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginStart="5dp"
+                android:gravity="start|center_vertical"
+                android:text="Link Status"
+                android:textColor="@color/colorWhite"
+                android:textSize="14sp" />
+        </com.geehe.fpvue.osd.MovableLayout>
 
         <com.geehe.fpvue.osd.MovableLayout
             android:id="@+id/itemSats"
@@ -501,87 +579,6 @@
         </com.geehe.fpvue.osd.MovableLayout>
 
     </FrameLayout>
-
-    <SurfaceView
-        android:id="@+id/sv_h265"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="#3F687A"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="16:9"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <SurfaceView
-        android:id="@+id/sv_h264"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="16:9"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/btnSettings"
-        style="@style/Widget.Material3.Button.IconButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:icon="@drawable/baseline_settings_24"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/tv_message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Loading...."
-        android:textColor="@color/colorWhite"
-        android:translationZ="10dp"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5"
-        tools:ignore="HardcodedText"></TextView>
-
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/statBar"
-        android:layout_width="0dp"
-        android:layout_height="30dp"
-        android:background="#33000000"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent">
-
-
-        <TextView
-            android:id="@+id/tvVideoInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="5dp"
-            android:textColor="@color/colorWhite"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.523" />
-
-        <TextView
-            android:id="@+id/tvWFBNG_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="3dp"
-            android:textAlignment="viewEnd"
-            android:textColor="@color/colorWhite"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

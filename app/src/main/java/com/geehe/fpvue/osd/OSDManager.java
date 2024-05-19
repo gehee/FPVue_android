@@ -98,6 +98,7 @@ public class OSDManager  {
         listOSDItems.add(new OSDElement("Ground Speed", binding.itemGndSpeed));
         listOSDItems.add(new OSDElement("Home", binding.itemHomeNav));
         listOSDItems.add(new OSDElement("Latitude", binding.itemLat));
+        listOSDItems.add(new OSDElement("Link Stats", binding.itemLinkStatus));
         listOSDItems.add(new OSDElement("Longitude", binding.itemLon));
         listOSDItems.add(new OSDElement("Pitch", binding.itemPitch));
         listOSDItems.add(new OSDElement("RC Link", binding.itemRCLink));
@@ -107,6 +108,7 @@ public class OSDManager  {
         listOSDItems.add(new OSDElement("Throttle", binding.itemThrottle));
         listOSDItems.add(new OSDElement("Timer", binding.itemTimer));
         listOSDItems.add(new OSDElement("Total Distance", binding.itemTotDis));
+        listOSDItems.add(new OSDElement("Video Stats", binding.itemVideoStats));
 
         restoreOSDConfig();
     }
