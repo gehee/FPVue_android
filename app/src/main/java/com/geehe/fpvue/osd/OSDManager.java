@@ -30,64 +30,49 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public class OSDManager implements ControlOSDItemAdapter.OnOSDItemCheckChangeListener {
+public class OSDManager  {
     private final ActivityVideoBinding binding;
     private final Context context;
     private final Handler handler = new Handler();
 
-    private MovableLayout osdSats, osdLon, osdLat, osdAlt, osdThrottle, osdRCLink, osdBat, osdCell, osdNav, osdDis, osdTotDis, osdTimer, osdGndSpeed, osdAirSpeed, osdStatus, osdCurrent, osdFlightMode, osdRoll, osdPitch;
-    private List<MovableLayout> listOSDItems;
-    private ListView listViewOSD;
-    private Button buttonOSD;
-    private LinearLayout osdCfgLayout;
-    private ControlOSDItemAdapter adapterOSD;
+    public List<OSDElement> listOSDItems;
     private String currentFCStatus = "";
     private boolean isFlying = false;
     private CountDownTimer mCountDownTimer;
     private final byte FLIGHT_MODE_MANUAL = 1, FLIGHT_MODE_STAB = 2, FLIGHT_MODE_ALTH = 3, FLIGHT_MODE_LOITER = 4, FLIGHT_MODE_RTL = 5, FLIGHT_MODE_LAND = 6, FLIGHT_MODE_POSHOLD = 7, FLIGHT_MODE_AUTOTUNE = 8, FLIGHT_MODE_ACRO = 9, FLIGHT_MODE_FBWA = 10, FLIGHT_MODE_FBWB = 11, FLIGHT_MODE_CRUISE = 12, FLIGHT_MODE_TAKEOFF = 13, FLIGHT_MODE_RATE = 15, FLIGHT_MODE_HORZ = 16, FLIGHT_MODE_CIRCLE = 17, FLIGHT_MODE_AUTO = 18, FLIGHT_MODE_QSTAB = 20, FLIGHT_MODE_QHOVER = 21, FLIGHT_MODE_QLOITER = 22, FLIGHT_MODE_QLAND = 23, FLIGHT_MODE_QRTL = 24;
     private static final String TAG = "com.geehe.fpvue.osd";
+
+    private boolean osdLocked = true;
+
     public OSDManager(Context context, ActivityVideoBinding binding)
     {
         this.binding = binding;
         this.context = context;
     }
 
-    @Override
-    public void onOSDItemCheckChanged(int position, boolean isChecked) {
-        if(position == 0)
-        {
-            for (int i = 0; i < listOSDItems.size(); i++) {
-                listOSDItems.get(i).setMovable(!isChecked);
-            }
+    public void lockOSD(Boolean isLocked) {
+        for (int i = 0; i < listOSDItems.size(); i++) {
+            listOSDItems.get(i).layout.setMovable(!isLocked);
         }
-        else {
-            // Show or hide the ImageView corresponding to the checkbox position
-            MovableLayout item = listOSDItems.get(position-1);
-            if (isChecked) {
-                item.setVisibility(View.VISIBLE);
-            } else {
-                item.setVisibility(View.GONE);
-            }
-        }
+        osdLocked = isLocked;
+    }
+
+    public Boolean isOSDLocked() {
+        return osdLocked;
+    }
+
+    public void onOSDItemCheckChanged(OSDElement element, boolean isChecked) {
+        // Show or hide the ImageView corresponding to the checkbox position
+        MovableLayout item = element.layout;
+        item.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        SharedPreferences prefs = context.getSharedPreferences( "osd_config", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(item.getId()+"_enabled", isChecked);
+        editor.apply();
     }
 
     public void setUp()
     {
-        // Setup OSD
-        buttonOSD = binding.btnConfig;
-        listViewOSD = binding.lvOSD;
-        osdCfgLayout = binding.osdCfgLayout;
-        buttonOSD.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (osdCfgLayout.getVisibility() == View.GONE) {
-                    osdCfgLayout.setVisibility(View.VISIBLE);
-                } else {
-                    osdCfgLayout.setVisibility(View.GONE);
-                }
-            }
-        });
-
         mCountDownTimer = new CountDownTimer(60*60*1000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
@@ -102,90 +87,43 @@ public class OSDManager implements ControlOSDItemAdapter.OnOSDItemCheckChangeLis
             }
         };
 
-        osdSats = binding.itemSats;
-        osdLon = binding.itemLon;
-        osdLat = binding.itemLat;
-        osdAlt = binding.itemAlt;
-        osdThrottle = binding.itemThrottle;
-        osdRCLink = binding.itemRCLink;
-        osdCurrent = binding.itemCurrent;
-        osdBat = binding.itemBat;
-        osdCell = binding.itemBatCell;
-        osdNav = binding.itemHomeNav;
-        osdDis = binding.itemDis;
-        osdTotDis = binding.itemTotDis;
-        osdTimer = binding.itemTimer;
-        osdGndSpeed = binding.itemGndSpeed;
-        osdAirSpeed = binding.itemAirSpeed;
-        osdStatus = binding.itemStatus;
-        osdFlightMode = binding.itemFlightMode;
-        osdRoll = binding.itemRoll;
-        osdPitch = binding.itemPitch;
+        listOSDItems = new ArrayList<OSDElement>();
+        listOSDItems.add(new OSDElement("Air Speed", binding.itemAirSpeed));
+        listOSDItems.add(new OSDElement("Altitude", binding.itemAlt));
+        listOSDItems.add(new OSDElement("Battery", binding.itemBat));
+        listOSDItems.add(new OSDElement("Cell battery", binding.itemBatCell));
+        listOSDItems.add(new OSDElement("Current", binding.itemCurrent));
+        listOSDItems.add(new OSDElement("Air Speed", binding.itemDis));
+        listOSDItems.add(new OSDElement("Flight Mode", binding.itemFlightMode));
+        listOSDItems.add(new OSDElement("Ground Speed", binding.itemGndSpeed));
+        listOSDItems.add(new OSDElement("Home", binding.itemHomeNav));
+        listOSDItems.add(new OSDElement("Latitude", binding.itemLat));
+        listOSDItems.add(new OSDElement("Longitude", binding.itemLon));
+        listOSDItems.add(new OSDElement("Pitch", binding.itemPitch));
+        listOSDItems.add(new OSDElement("RC Link", binding.itemRCLink));
+        listOSDItems.add(new OSDElement("Roll", binding.itemRoll));
+        listOSDItems.add(new OSDElement("Satellites", binding.itemSats));
+        listOSDItems.add(new OSDElement("Status", binding.itemStatus));
+        listOSDItems.add(new OSDElement("Throttle", binding.itemThrottle));
+        listOSDItems.add(new OSDElement("Timer", binding.itemTimer));
+        listOSDItems.add(new OSDElement("Total Distance", binding.itemTotDis));
 
-        listOSDItems = new ArrayList<MovableLayout>();
-        listOSDItems.add(osdSats);
-        listOSDItems.add(osdLon);
-        listOSDItems.add(osdLat);
-        listOSDItems.add(osdAlt);
-        listOSDItems.add(osdThrottle);
-        listOSDItems.add(osdRCLink);
-        listOSDItems.add(osdCurrent);
-        listOSDItems.add(osdBat);
-        listOSDItems.add(osdCell);
-        listOSDItems.add(osdNav);
-        listOSDItems.add(osdDis);
-        listOSDItems.add(osdTotDis);
-        listOSDItems.add(osdTimer);
-        listOSDItems.add(osdGndSpeed);
-        listOSDItems.add(osdAirSpeed);
-        listOSDItems.add(osdStatus);
-        listOSDItems.add(osdFlightMode);
-        listOSDItems.add(osdRoll);
-        listOSDItems.add(osdPitch);
-
-        List<String> items = Arrays.asList("Lock/Unlock", "Sats", "Lon", "Lat", "Alt", "Throttle", "RCLink", "Current", "Total Bat", "Cell", "Navigation", "Distance", "Total Dist", "Fly time", "Groud Speed", "Air Speed", "FC's Status", "Flight Mode", "Roll", "Pitch");
-        adapterOSD = new ControlOSDItemAdapter(context, items);
-        adapterOSD.setItemCheckChangeListener(this::onOSDItemCheckChanged);
-        listViewOSD.setAdapter(adapterOSD);
         restoreOSDConfig();
     }
 
-    public void restoreOSDConfig() {
-        for (int i = 0; i < listOSDItems.size(); i++) {
-            onOSDItemCheckChanged(i+1,false);
-            listOSDItems.get(i).restorePosition();
-        }
-
-        SharedPreferences prefs = context.getSharedPreferences( "checkbox_states", MODE_PRIVATE);
-        Set<String> checkedPositionsSet = prefs.getStringSet("checked_states", new HashSet<String>());
-        SparseBooleanArray checkedItemPositions = new SparseBooleanArray();
-
-        for (String positionString : checkedPositionsSet) {
-            int position = Integer.parseInt(positionString);
-            checkedItemPositions.put(position, true);
-            onOSDItemCheckChanged(position,true);
-        }
-
-        adapterOSD.setCheckedItemPositions(checkedItemPositions);
+    public boolean isElementEnabled(int resId) {
+        SharedPreferences prefs = context.getSharedPreferences( "osd_config", MODE_PRIVATE);
+        return prefs.getBoolean(resId+"_enabled", false);
     }
 
-
-    public void saveOSDConfig() {
-        SharedPreferences prefs = context.getSharedPreferences( "checkbox_states", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        SparseBooleanArray checkedItemPositions = adapterOSD.getCheckedItemPositions();
-        HashSet<String> checkedPositionsSet = new HashSet<>();
-
-        for (int i = 0; i < checkedItemPositions.size(); i++) {
-            int key = checkedItemPositions.keyAt(i);
-            if (checkedItemPositions.get(key)) {
-                checkedPositionsSet.add(String.valueOf(key));
-            }
+    public void restoreOSDConfig() {
+        SharedPreferences prefs = context.getSharedPreferences( "osd_config", MODE_PRIVATE);
+        for (OSDElement element : listOSDItems) {
+            boolean enabled = prefs.getBoolean(element.layout.getId()+"_enabled", false);
+            onOSDItemCheckChanged(element, enabled);
+            element.layout.restorePosition();
+            element.layout.setMovable(!isOSDLocked());
         }
-
-        editor.putStringSet("checked_states", checkedPositionsSet);
-        editor.apply();
     }
 
     private float OSDToCourse(double lat1, double long1, double lat2, double long2)
@@ -204,15 +142,14 @@ public class OSDManager implements ControlOSDItemAdapter.OnOSDItemCheckChangeLis
     public void render(MavlinkData data)
     {
         float voltage = (float) (data.telemetryBattery/1000.0);
-        binding.tvBat.setText(formatFloat(voltage," Volt", ""));
+        binding.tvBat.setText(formatFloat(voltage,"V", ""));
         int cellCount = (int) (floor(voltage/4.3)+1);
         float cellVolt = voltage/cellCount;
-        binding.tvBatCell.setText(formatFloat(cellVolt," Volt/Cell", ""));
+        binding.tvBatCell.setText(formatFloat(cellVolt,"V", ""));
 
-        binding.tvCurrent.setText(formatFloat(data.telemetryCurrent,"","Amp "));
-//                binding.tvTelemCurrCons.setText(formatFloat(data.telemetryCurrentConsumed,"A",""));
+        binding.tvCurrent.setText(formatDouble(data.telemetryCurrent/1000.0,"A",""));
 
-        binding.tvAlt.setText(formatDouble(data.telemetryAltitude/100-1000," m",""));
+        binding.tvAlt.setText(formatDouble(data.telemetryAltitude/100-1000,"m",""));
 
         binding.tvThrottle.setText(String.format("%.0f", data.telemetryThrottle)+" %\t");
 

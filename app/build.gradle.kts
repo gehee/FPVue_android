@@ -49,14 +49,14 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(project(":app:wfbngrtl8812"))
-    implementation(libs.ui.graphics.android)
     implementation(project(":app:mavlink"))
-    implementation(libs.cardview)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
+    implementation(libs.me.saket.cascade.cascade)
+    implementation(libs.cascade.compose)
 
     implementation(project(":app:videonative"))
 }

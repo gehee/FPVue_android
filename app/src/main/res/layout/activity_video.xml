@@ -5,7 +5,6 @@
     android:id="@+id/frameLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
     android:paddingLeft="0dp"
     android:paddingTop="0dp"
     android:paddingRight="0dp"
@@ -18,14 +17,17 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:paddingLeft="16dp"
+        android:paddingTop="16dp"
+        android:paddingRight="16dp"
         android:translationZ="15dp"
         app:layout_constraintBottom_toTopOf="@+id/statBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintVertical_bias="1.0"
+        tools:visibility="gone">
 
         <com.geehe.fpvue.osd.MovableLayout
             android:id="@+id/itemSats"
@@ -52,8 +54,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0"
                 android:gravity="start|center_vertical"
+                android:text="0"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
 
@@ -78,8 +80,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0.0000000"
                 android:gravity="start|center_vertical"
+                android:text="0.0000000"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -103,8 +105,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0.0000000"
                 android:gravity="start|center_vertical"
+                android:text="0.0000000"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -128,8 +130,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 m"
                 android:gravity="start|center_vertical"
+                android:text="0 m"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -153,8 +155,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 %"
                 android:gravity="start|center_vertical"
+                android:text="0 %"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -178,8 +180,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 Volt"
                 android:gravity="start|center_vertical"
+                android:text="0 Volt"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -203,8 +205,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 Volt/Cell"
                 android:gravity="start|center_vertical"
+                android:text="0 Volt/Cell"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -228,8 +230,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 m"
                 android:gravity="start|center_vertical"
+                android:text="0 m"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -253,8 +255,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 m"
                 android:gravity="start|center_vertical"
+                android:text="0 m"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -278,8 +280,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="00:00"
                 android:gravity="start|center_vertical"
+                android:text="00:00"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -303,8 +305,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 %"
                 android:gravity="start|center_vertical"
+                android:text="0 %"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -322,19 +324,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0"
                 android:gravity="start|center_vertical"
+                android:text="0"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
+
             <TextView
                 android:id="@+id/tvRealHeading"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0"
                 android:gravity="start|center_vertical"
+                android:text="0"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
+
             <ImageView
                 android:id="@+id/imgHomeNav"
                 android:layout_width="16dp"
@@ -355,13 +359,14 @@
                 android:layout_width="16dp"
                 android:layout_height="38dp"
                 android:src="@drawable/gnd_speed" />
+
             <TextView
                 android:id="@+id/tvGndSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 km/h"
                 android:gravity="start|center_vertical"
+                android:text="0 km/h"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -379,13 +384,14 @@
                 android:layout_width="16dp"
                 android:layout_height="38dp"
                 android:src="@drawable/air_speed" />
+
             <TextView
                 android:id="@+id/tvAirSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 km/h"
                 android:gravity="start|center_vertical"
+                android:text="0 km/h"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -403,13 +409,14 @@
                 android:layout_width="16dp"
                 android:layout_height="38dp"
                 android:src="@drawable/roll" />
+
             <TextView
                 android:id="@+id/tvRoll"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 degree"
                 android:gravity="start|center_vertical"
+                android:text="0 degree"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -427,13 +434,14 @@
                 android:layout_width="16dp"
                 android:layout_height="38dp"
                 android:src="@drawable/pitch" />
+
             <TextView
                 android:id="@+id/tvPitch"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
-                android:text="0 degree"
                 android:gravity="start|center_vertical"
+                android:text="0 degree"
                 android:textColor="@color/colorWhite"
                 android:textSize="14sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -450,8 +458,8 @@
                 android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Waiting status..."
                 android:gravity="center"
+                android:text="Waiting status..."
                 android:textColor="@color/colorWhite"
                 android:textSize="16sp" />
         </com.geehe.fpvue.osd.MovableLayout>
@@ -493,10 +501,12 @@
         </com.geehe.fpvue.osd.MovableLayout>
 
     </FrameLayout>
+
     <SurfaceView
         android:id="@+id/sv_h265"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="#3F687A"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="16:9"
         app:layout_constraintEnd_toEndOf="parent"
@@ -510,6 +520,14 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="16:9"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnSettings"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:icon="@drawable/baseline_settings_24"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
@@ -529,38 +547,6 @@
         tools:ignore="HardcodedText"></TextView>
 
 
-
-    <LinearLayout
-        android:id="@+id/osdCfgLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="600dp"
-        android:layout_marginBottom="50dp"
-        android:orientation="vertical"
-        android:translationZ="20dp"
-        android:visibility="gone"
-        android:background="#33000000"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/tvOSD"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="OSD Config"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textColor="@color/colorWhite" />
-
-        <ListView
-            android:id="@+id/lvOSD"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/statBar"
         android:layout_width="0dp"
@@ -572,17 +558,6 @@
         app:layout_constraintStart_toStartOf="parent">
 
 
-        <Button
-            android:id="@+id/btnConfig"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="350dp"
-            android:gravity="center"
-            android:text="OSD Config"
-            android:textSize="9sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
         <TextView
             android:id="@+id/tvVideoInfo"
             android:layout_width="wrap_content"
@@ -590,7 +565,7 @@
             android:layout_marginStart="5dp"
             android:textColor="@color/colorWhite"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btnSettings"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.523" />
 
@@ -606,18 +581,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
 
-
-        <ImageView
-            android:id="@+id/btnSettings"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/baseline_settings_24" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
