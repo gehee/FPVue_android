@@ -109,9 +109,9 @@ int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel) {
             int8_t noise[4] = {1,1,1,1};
             uint8_t antenna[4] = {1,1,1,1};
             if (frame.MatchesChannelID(video_channel_id_be8)) {
-                video_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, NULL);
+                video_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, 0, 0, NULL);
             } else if (frame.MatchesChannelID(mavlink_channel_id_be8)) {
-                mavlink_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, NULL);
+                mavlink_agg.process_packet(packet.Data.data() + sizeof(ieee80211_header), packet.Data.size() - sizeof(ieee80211_header) - 4, 0, antenna, rssi, noise, freq, 0, 0, NULL);
             }
            };
         rtlDevice->Init(packetProcessor, SelectedChannel{
