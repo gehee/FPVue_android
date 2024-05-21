@@ -12,15 +12,10 @@ import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
-import android.widget.PopupMenu;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -42,15 +37,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import me.saket.cascade.CascadePopupMenu;
+import me.saket.cascade.CascadePopupMenuCheckable;
+
 
 // Most basic implementation of an activity that uses VideoNative to stream a video
 // Into an Android Surface View
@@ -84,90 +76,74 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         binding = ActivityVideoBinding.inflate(getLayoutInflater());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-
         // Setup video player
         setContentView(binding.getRoot());
         videoPlayerH264 = new VideoPlayer(this);
         videoPlayerH264.setIVideoParamsChanged(this);
         binding.svH264.getHolder().addCallback(videoPlayerH264.configure1());
 
-         videoPlayerH265 = new VideoPlayer(this);
-         videoPlayerH265.setIVideoParamsChanged(this);
-         binding.svH265.getHolder().addCallback(videoPlayerH265.configure1());
+        videoPlayerH265 = new VideoPlayer(this);
+        videoPlayerH265.setIVideoParamsChanged(this);
+        binding.svH265.getHolder().addCallback(videoPlayerH265.configure1());
 
         osdManager = new OSDManager(this, binding);
         osdManager.setUp();
 
         SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
-        binding.btnSettings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                CascadePopupMenu popup = new CascadePopupMenu(VideoActivity.this, v);
+        binding.btnSettings.setOnClickListener(v -> {
+            CascadePopupMenuCheckable popup = new CascadePopupMenuCheckable(VideoActivity.this, v);
 
-                SubMenu chnMenu = popup.getMenu().addSubMenu("Channel");
-                int channelPref = prefs.getInt("wifi-channel", 11);
-                chnMenu.setHeaderTitle("Current: " + channelPref);
-                String[] channels = getResources().getStringArray(R.array.channels);
-                for (String chnStr : channels) {
-                    if (channelPref==Integer.parseInt(chnStr)){
-                        continue;
-                    }
-                    chnMenu.add(chnStr).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            onChannelSettingChanged(Integer.parseInt(chnStr));
-                            return true;
-                        }
-                    });
+            SubMenu chnMenu = popup.getMenu().addSubMenu("Channel");
+            int channelPref = prefs.getInt("wifi-channel", 11);
+            chnMenu.setHeaderTitle("Current: " + channelPref);
+            String[] channels = getResources().getStringArray(R.array.channels);
+            for (String chnStr : channels) {
+                if (channelPref==Integer.parseInt(chnStr)){
+                    continue;
                 }
-
-                // Codecs
-                String codecPref = prefs.getString("codec", "h265");
-                SubMenu codecMenu = popup.getMenu().addSubMenu("Codec");
-                codecMenu.setHeaderTitle("Current: " + codecPref);
-
-                String[] codecs = getResources().getStringArray(R.array.codecs);
-                for (String codecStr : codecs) {
-                    if (codecPref.equals(codecStr)){
-                        continue;
-                    }
-                    codecMenu.add(codecStr).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            onCodecSettingChanged(codecStr);
-                            return true;
-                        }
-                    });
-                }
-
-                SubMenu osd =  popup.getMenu().addSubMenu("OSD");
-                for (OSDElement element: osdManager.listOSDItems) {
-                    MenuItem itm = osd.add(element.name);
-                    itm.setCheckable(true);
-                    itm.setChecked(osdManager.isElementEnabled(element.layout.getId()));
-                    itm.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            item.setChecked(!item.isChecked());
-                            osdManager.onOSDItemCheckChanged(element, item.isChecked());
-                            popup.navigateBack();
-                            return true;
-                        }
-                    });
-                }
-
-                String lockLabel = osdManager.isOSDLocked() ? "Unlock OSD" : "Lock OSD";
-                MenuItem lock = popup.getMenu().add(lockLabel);
-                lock.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        osdManager.lockOSD(!osdManager.isOSDLocked());
-                        return true;
-                    }
+                chnMenu.add(chnStr).setOnMenuItemClickListener(item -> {
+                    onChannelSettingChanged(Integer.parseInt(chnStr));
+                    return true;
                 });
-
-                popup.show();
             }
+
+            // Codecs
+            String codecPref = prefs.getString("codec", "h265");
+            SubMenu codecMenu = popup.getMenu().addSubMenu("Codec");
+            codecMenu.setHeaderTitle("Current: " + codecPref);
+
+            String[] codecs = getResources().getStringArray(R.array.codecs);
+            for (String codecStr : codecs) {
+                if (codecPref.equals(codecStr)){
+                    continue;
+                }
+                codecMenu.add(codecStr).setOnMenuItemClickListener(item -> {
+                    onCodecSettingChanged(codecStr);
+                    return true;
+                });
+            }
+
+            // OSD
+            SubMenu osd = popup.getMenu().addSubMenu("OSD");
+            for (OSDElement element: osdManager.listOSDItems) {
+                MenuItem itm = osd.add(element.name);
+                itm.setCheckable(true);
+                itm.setChecked(osdManager.isElementEnabled(element.layout.getId()));
+                itm.setOnMenuItemClickListener(item -> {
+                    item.setChecked(!item.isChecked());
+                    osdManager.onOSDItemCheckChanged(element, item.isChecked());
+                    return true;
+                });
+            }
+
+            String lockLabel = osdManager.isOSDLocked() ? "Unlock OSD" : "Lock OSD";
+            MenuItem lock = popup.getMenu().add(lockLabel);
+            lock.setOnMenuItemClickListener(item -> {
+                osdManager.lockOSD(!osdManager.isOSDLocked());
+                return true;
+            });
+
+            popup.show();
         });
 
         // Setup mavlink
@@ -183,7 +159,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         copyGSKey();
 
         usbReceiver = new BroadcastReceiver() {
-            public void onReceive(Context context, Intent intent) {
+            public void onReceive(Context context, Intent intent) { 
                 synchronized (this) {
                     StopWfbNg();
                     if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction())) {

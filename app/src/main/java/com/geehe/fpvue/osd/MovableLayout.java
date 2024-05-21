@@ -2,7 +2,10 @@ package com.geehe.fpvue.osd;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Point;
 import android.util.AttributeSet;
+import android.view.WindowManager;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.widget.LinearLayout;
 
@@ -10,6 +13,8 @@ public class MovableLayout extends LinearLayout {
     private float dX, dY;
     private SharedPreferences preferences;
     private boolean isMovable = false;
+
+    private float defaultX,defaultY;
 
     public MovableLayout(Context context) {
         super(context);
@@ -28,6 +33,14 @@ public class MovableLayout extends LinearLayout {
 
     private void init(Context context) {
         preferences = context.getSharedPreferences("movable_layout_prefs", Context.MODE_PRIVATE);
+
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = windowManager.getDefaultDisplay();
+        Point displaySize = new Point();
+        display.getRealSize(displaySize);
+
+        defaultX = (float) displaySize.x / 2 - ((float)displaySize.y/8);
+        defaultY = (float) displaySize.y / 2 - ((float)displaySize.y/4);
     }
 
     @Override
@@ -63,8 +76,8 @@ public class MovableLayout extends LinearLayout {
     }
 
     public void restorePosition() {
-        float x = preferences.getFloat(getId() + "_x", 100);
-        float y = preferences.getFloat(getId() + "_y", 100);
+        float x = preferences.getFloat(getId() + "_x", defaultX);
+        float y = preferences.getFloat(getId() + "_y", defaultY);
         setX(x);
         setY(y);
     }

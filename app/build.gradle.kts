@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidApplication)
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -42,6 +43,9 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 dependencies {
@@ -50,6 +54,7 @@ dependencies {
     implementation(libs.material)
     implementation(project(":app:wfbngrtl8812"))
     implementation(project(":app:mavlink"))
+    implementation("androidx.core:core-ktx:+")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
