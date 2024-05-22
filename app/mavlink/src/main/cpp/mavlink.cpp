@@ -66,6 +66,7 @@ void* listen(int mavlink_port) {
     }
 
     // Bind port
+    __android_log_print(ANDROID_LOG_DEBUG, "mavlink.cpp", "Mavlink listening on %d", mavlink_port);
     struct sockaddr_in addr = {};
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -73,7 +74,7 @@ void* listen(int mavlink_port) {
     addr.sin_port = htons(mavlink_port);
 
     if (bind(fd, (struct sockaddr*)(&addr), sizeof(addr)) != 0) {
-        __android_log_print(ANDROID_LOG_DEBUG, "mavlink.cpp", "ERROR: Unable to bind MavLink port: %s" , strerror(errno));
+        __android_log_print(ANDROID_LOG_ERROR, "mavlink.cpp", "Unable to bind MavLink port %d: %s" , mavlink_port, strerror(errno));
         return 0;
     }
 
@@ -82,12 +83,11 @@ void* listen(int mavlink_port) {
     tv.tv_sec = 0;
     tv.tv_usec = 100000;
     if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-        __android_log_print(ANDROID_LOG_DEBUG, "mavlink.cpp", "ERROR: Unable to bind MavLink rx timeout:  %s" , strerror(errno));
+        __android_log_print(ANDROID_LOG_ERROR, "mavlink.cpp", "Unable to bind MavLink rx timeout:  %s" , strerror(errno));
         return 0;
     }
 
     char buffer[2048];
-    char str[1024];
     while (!mavlink_thread_signal) {
         memset(buffer, 0x00, sizeof(buffer));
         int ret = recv(fd, buffer, sizeof(buffer), 0);
@@ -95,6 +95,7 @@ void* listen(int mavlink_port) {
             continue;
         } else if (ret == 0) {
             // peer has done an orderly shutdown
+            __android_log_print(ANDROID_LOG_ERROR, "mavlink.cpp", "Shutting down mavlink: ret=0");
             return 0;
         }
 
