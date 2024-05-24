@@ -90,8 +90,9 @@ public class OSDManager  {
         listOSDItems = new ArrayList<OSDElement>();
         listOSDItems.add(new OSDElement("Air Speed", binding.itemAirSpeed));
         listOSDItems.add(new OSDElement("Altitude", binding.itemAlt));
-        listOSDItems.add(new OSDElement("Battery", binding.itemBat));
-        listOSDItems.add(new OSDElement("Cell battery", binding.itemBatCell));
+        listOSDItems.add(new OSDElement("Battery Air", binding.itemBat));
+        listOSDItems.add(new OSDElement("Battery Cell Air", binding.itemBatCell));
+        listOSDItems.add(new OSDElement("Battery GS", binding.itemGSBattery));
         listOSDItems.add(new OSDElement("Current", binding.itemCurrent));
         listOSDItems.add(new OSDElement("Flight Mode", binding.itemFlightMode));
         listOSDItems.add(new OSDElement("Ground Speed", binding.itemGndSpeed));

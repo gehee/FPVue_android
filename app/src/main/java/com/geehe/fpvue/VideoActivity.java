@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -58,6 +59,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     private static final String ACTION_USB_PERMISSION = "com.geehe.fpvue.USB_PERMISSION";
 
     BroadcastReceiver usbReceiver;
+    BroadcastReceiver batteryReceiver;
     List<UsbDevice> activeWifiAdapters = new Vector<UsbDevice>();
     WfbNgLink wfbLink;
     Thread wfbThread;
@@ -185,15 +187,32 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 }
             }
         };
-        // Set the intent filter for the broadcast receiver, and register.
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        filter.addAction(ACTION_USB_PERMISSION);
+        batteryReceiver = new BroadcastReceiver() {
+            public void onReceive(Context context, Intent batteryStatus) {
+                int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+                boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                        status == BatteryManager.BATTERY_STATUS_FULL;
+
+                binding.imgGSBattery.setImageResource(isCharging ? R.drawable.baseline_battery_charging_full_24 : R.drawable.baseline_battery_3_bar_24);
+
+                int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                float batteryPct = level * 100 / (float)scale;
+                binding.tvGSBattery.setText((int)batteryPct+"%");
+            }
+        };
+
+        IntentFilter usbFilter = new IntentFilter();
+        usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+        usbFilter.addAction(ACTION_USB_PERMISSION);
+        IntentFilter batFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         if (Build.VERSION.SDK_INT >= 33) {
-            registerReceiver(usbReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(usbReceiver, usbFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(batteryReceiver, batFilter, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(usbReceiver, filter);
+            registerReceiver(usbReceiver, usbFilter);
+            registerReceiver(batteryReceiver, batFilter);
         }
     }
 
@@ -206,6 +225,9 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         MavlinkNative.nativeStop(this);
         try {
             unregisterReceiver(usbReceiver);
+        } catch(java.lang.IllegalArgumentException ignored) {}
+        try {
+            unregisterReceiver(batteryReceiver);
         } catch(java.lang.IllegalArgumentException ignored) {}
         Log.d(TAG, "onStop");
         StopWfbNg();

@@ -579,6 +579,31 @@
                 android:textSize="16sp" />
         </com.geehe.fpvue.osd.MovableLayout>
 
+        <com.geehe.fpvue.osd.MovableLayout
+            android:id="@+id/itemGSBattery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <ImageView
+                android:id="@+id/imgGSBattery"
+                android:layout_width="16dp"
+                android:layout_height="38dp"
+                android:src="@drawable/baseline_battery_charging_full_24" />
+
+            <TextView
+                android:id="@+id/tvGSBattery"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="5dp"
+                android:gravity="start|center_vertical"
+                android:text="100%"
+                android:textColor="@color/colorWhite"
+                android:textSize="14sp" />
+        </com.geehe.fpvue.osd.MovableLayout>
+
     </FrameLayout>
 
 
