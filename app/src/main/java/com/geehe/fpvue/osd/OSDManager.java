@@ -93,10 +93,10 @@ public class OSDManager  {
         listOSDItems.add(new OSDElement("Battery", binding.itemBat));
         listOSDItems.add(new OSDElement("Cell battery", binding.itemBatCell));
         listOSDItems.add(new OSDElement("Current", binding.itemCurrent));
-        listOSDItems.add(new OSDElement("Air Speed", binding.itemDis));
         listOSDItems.add(new OSDElement("Flight Mode", binding.itemFlightMode));
         listOSDItems.add(new OSDElement("Ground Speed", binding.itemGndSpeed));
-        listOSDItems.add(new OSDElement("Home", binding.itemHomeNav));
+        listOSDItems.add(new OSDElement("Home Direction", binding.itemHomeNav));
+        listOSDItems.add(new OSDElement("Home Distance", binding.itemDis));
         listOSDItems.add(new OSDElement("Latitude", binding.itemLat));
         listOSDItems.add(new OSDElement("Longitude", binding.itemLon));
         listOSDItems.add(new OSDElement("Pitch", binding.itemPitch));
