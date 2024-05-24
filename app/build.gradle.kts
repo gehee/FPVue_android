@@ -48,6 +48,7 @@ android {
     }
 }
 
+
 dependencies {
 
     implementation(libs.appcompat)
@@ -55,6 +56,7 @@ dependencies {
     implementation(project(":app:wfbngrtl8812"))
     implementation(project(":app:mavlink"))
     implementation("androidx.core:core-ktx:+")
+    implementation ("com.github.Philjay:mpandroidchart:3.1.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

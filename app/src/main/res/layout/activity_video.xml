@@ -54,7 +54,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.5"
-        tools:ignore="HardcodedText"/>
+        tools:ignore="HardcodedText" />
 
 
     <FrameLayout
@@ -78,6 +78,12 @@
             android:orientation="horizontal"
             android:visibility="visible">
 
+            <ImageView
+                android:id="@+id/imgVideoStats"
+                android:layout_width="16dp"
+                android:layout_height="38dp"
+                android:src="@drawable/baseline_personal_video_24" />
+
             <TextView
                 android:id="@+id/tvVideoStats"
                 android:layout_width="wrap_content"
@@ -90,12 +96,32 @@
         </com.geehe.fpvue.osd.MovableLayout>
 
         <com.geehe.fpvue.osd.MovableLayout
+            android:id="@+id/itemLinkStatusChart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <com.github.mikephil.charting.charts.PieChart
+                android:id="@+id/pcLinkStat"
+                android:layout_width="65dp"
+                android:layout_height="65dp" />
+        </com.geehe.fpvue.osd.MovableLayout>
+
+        <com.geehe.fpvue.osd.MovableLayout
             android:id="@+id/itemLinkStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="left"
             android:orientation="horizontal"
             android:visibility="visible">
+
+            <ImageView
+                android:id="@+id/imgLinkStatus"
+                android:layout_width="16dp"
+                android:layout_height="38dp"
+                android:src="@drawable/baseline_import_export_24" />
 
             <TextView
                 android:id="@+id/tvLinkStatus"

@@ -8,6 +8,12 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="colorWhite">#FFFFFF</color>
+    <color name="colorGreen">#4CAF50</color>
+    <color name="colorYellow">#FFC107</color>
+    <color name="colorRed">#F44336</color>
+    <color name="colorGreenBg">#994CAF50</color>
+    <color name="colorYellowBg">#99FFC107</color>
+    <color name="colorRedBg">#99F44336</color>
     <color name="colorBackground">#4D000000</color>
 
 

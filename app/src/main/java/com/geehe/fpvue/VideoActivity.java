@@ -1,12 +1,13 @@
 package com.geehe.fpvue;
 
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,12 +31,18 @@ import com.geehe.wfbngrtl8812.WfbNGStats;
 import com.geehe.wfbngrtl8812.WfbNGStatsChanged;
 import com.geehe.wfbngrtl8812.WfbNgLink;
 import com.geehe.fpvue.osd.OSDManager;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.formatter.PercentFormatter;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -86,6 +93,22 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
         osdManager = new OSDManager(this, binding);
         osdManager.setUp();
+
+        PieChart chart = binding.pcLinkStat;
+        chart.getLegend().setEnabled(false);
+        chart.getDescription().setEnabled(false);
+        chart.setDrawHoleEnabled(true);
+        chart.setHoleColor(Color.WHITE);
+        chart.setTransparentCircleColor(Color.WHITE);
+        chart.setTransparentCircleAlpha(110);
+        chart.setHoleRadius(58f);
+        chart.setTransparentCircleRadius(61f);
+        chart.setHighlightPerTapEnabled(false);
+        chart.setRotationEnabled(false);
+        chart.setClickable(false);
+        chart.setTouchEnabled(false);
+        PieData noData = new PieData(new PieDataSet(new ArrayList<>(), ""));
+        chart.setData(noData);
 
         SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
         binding.btnSettings.setOnClickListener(v -> {
@@ -217,12 +240,11 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     @Override
     protected void onPause() {
-        Log.d(TAG, "lifecycle onPause " +  this);
         super.onPause();
     }
 
+    @Override
     protected void onStop() {
-        Log.d(TAG, "lifecycle onStop " +  this);
         MavlinkNative.nativeStop(this);
         unregisterReceivers();
         usbManager.stopAdapters();
@@ -230,6 +252,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         super.onStop();
     }
 
+    @Override
     protected void onResume() {
         if (!wfbLink.isRunning()){
             registerReceivers();
@@ -328,17 +351,66 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                     if (data.count_p_dec_err > 0) {
                         binding.tvLinkStatus.setText("Waiting for session key.");
                     } else {
-                        binding.tvLinkStatus.setText(String.format("lost=%d\t\trec=%d\t\tok=%d\t\tout=%d",
-                                data.count_p_lost,
-                                data.count_p_fec_recovered,
-                                data.count_p_dec_ok,
-                                data.count_p_outgoing));
+                        // NOTE: The order of the entries when being added to the entries array determines their position around the center of
+                        // the chart.
+                        ArrayList<PieEntry> entries = new ArrayList<>();
+                        entries.add(new PieEntry((float) data.count_p_dec_ok/data.count_p_all));
+                        entries.add(new PieEntry((float) data.count_p_fec_recovered/data.count_p_all));
+                        entries.add(new PieEntry((float) data.count_p_lost/data.count_p_all));
+                        PieDataSet dataSet = new PieDataSet(entries, "Link Status");
+                        dataSet.setDrawIcons(false);
+                        dataSet.setDrawValues(false);
+                        ArrayList<Integer> colors = new ArrayList<>();
+                        colors.add(getColor(R.color.colorGreen));
+                        colors.add(getColor(R.color.colorYellow));
+                        colors.add(getColor(R.color.colorRed));
+                        dataSet.setColors(colors);
+                        PieData pieData = new PieData(dataSet);
+                        pieData.setValueFormatter(new PercentFormatter());
+                        pieData.setValueTextSize(11f);
+                        pieData.setValueTextColor(Color.WHITE);
+
+                        binding.pcLinkStat.setData(pieData);
+                        binding.pcLinkStat.setCenterText(""+data.count_p_fec_recovered);
+                        binding.pcLinkStat.invalidate();
+
+                        int color = getColor(R.color.colorGreenBg);
+                        if ((float)data.count_p_fec_recovered/data.count_p_all>0.2) {
+                            color = getColor(R.color.colorYellowBg);
+                        }
+                        if (data.count_p_lost>0) {
+                            color = getColor(R.color.colorRedBg);
+                        }
+                        binding.imgLinkStatus.setImageTintList(ColorStateList.valueOf(color));
+                        binding.tvLinkStatus.setText(String.format("O%sD%sR%sL%s",
+                                paddedDigits(data.count_p_outgoing, 6),
+                                paddedDigits(data.count_p_dec_ok, 6),
+                                paddedDigits(data.count_p_fec_recovered, 6),
+                                paddedDigits(data.count_p_lost, 6)));
                     }
                 } else {
                     binding.tvLinkStatus.setText("No wfb-ng data.");
                 }
             }
         });
+    }
+
+    @Override
+    public void onNewMavlinkData(MavlinkData data) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                osdManager.render(data);
+            }
+        });
+    }
+
+    static String paddedDigits(int val, int len) {
+        StringBuilder sb = new StringBuilder(String.format("%d", val));
+        while (sb.length() < len) {
+            sb.append('\t');
+        }
+        return sb.toString();
     }
 
     private String copyGSKey() {
@@ -375,15 +447,5 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             }
         }
         return file.getAbsolutePath();
-    }
-
-    @Override
-    public void onNewMavlinkData(MavlinkData data) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                osdManager.render(data);
-            }
-        });
     }
 }
