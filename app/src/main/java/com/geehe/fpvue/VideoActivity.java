@@ -7,8 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,11 +36,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Vector;
 
 import me.saket.cascade.CascadePopupMenuCheckable;
 
@@ -55,30 +50,29 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     int lastVideoW=0,lastVideoH=0;
     private OSDManager osdManager;
 
-    private static final String TAG = "com.geehe.fpvue";
-    private static final String ACTION_USB_PERMISSION = "com.geehe.fpvue.USB_PERMISSION";
+    private static final String TAG = "VideoActivity";
 
-    BroadcastReceiver usbReceiver;
+    UsbManager usbManager;
     BroadcastReceiver batteryReceiver;
-    List<UsbDevice> activeWifiAdapters = new Vector<UsbDevice>();
     WfbNgLink wfbLink;
-    Thread wfbThread;
-    boolean permissionRefused = false;
 
     VideoPlayer videoPlayerH264;
     VideoPlayer videoPlayerH265;
-
     private String activeCodec;
-    private int activeChannel;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate");
+        Log.d(TAG, "lifecycle onCreate " +  this);
         super.onCreate(savedInstanceState);
         binding = ActivityVideoBinding.inflate(getLayoutInflater());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // Init wfb ng.
+        copyGSKey();
+        wfbLink = new WfbNgLink(VideoActivity.this);
+        wfbLink.SetWfbNGStatsChanged(VideoActivity.this);
+        usbManager = new UsbManager(this, binding, wfbLink);
+        usbManager.initWifiAdapters();
 
         // Setup video player
         setContentView(binding.getRoot());
@@ -98,7 +92,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             CascadePopupMenuCheckable popup = new CascadePopupMenuCheckable(VideoActivity.this, v);
 
             SubMenu chnMenu = popup.getMenu().addSubMenu("Channel");
-            int channelPref = prefs.getInt("wifi-channel", 11);
+            int channelPref = getChannel(this);
             chnMenu.setHeaderTitle("Current: " + channelPref);
             String[] channels = getResources().getStringArray(R.array.channels);
             for (String chnStr : channels) {
@@ -160,33 +154,6 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             }
         },0,200);
 
-        copyGSKey();
-
-        usbReceiver = new BroadcastReceiver() {
-            public void onReceive(Context context, Intent intent) { 
-                synchronized (this) {
-                    if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction())) {
-                        Log.d(TAG, "usb detached.");
-                        binding.tvMessage.setVisibility(View.VISIBLE);
-                        binding.tvMessage.setText("Wifi adapter detached.");
-                        UsbDevice detachedDevice = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                        if (detachedDevice == null ){
-                            return;
-                        }
-                        activeWifiAdapters.removeIf(usbDevice -> usbDevice.getDeviceName().equals(detachedDevice.getDeviceName()));
-                        if (activeWifiAdapters.isEmpty()) {
-                            StopWfbNg();
-                        }
-                    } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(intent.getAction())) {
-                        StopWfbNg();
-                        Log.d(TAG, "usb attached.");
-                    } else if (ACTION_USB_PERMISSION.equals(intent.getAction())) {
-                        StopWfbNg();
-                        permissionRefused = !intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
-                    }
-                }
-            }
-        };
         batteryReceiver = new BroadcastReceiver() {
             public void onReceive(Context context, Intent batteryStatus) {
                 int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
@@ -226,22 +193,22 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     public void registerReceivers(){
         IntentFilter usbFilter = new IntentFilter();
-        usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        usbFilter.addAction(ACTION_USB_PERMISSION);
+        usbFilter.addAction(android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED);
+        usbFilter.addAction(android.hardware.usb.UsbManager.ACTION_USB_DEVICE_DETACHED);
+        usbFilter.addAction(UsbManager.ACTION_USB_PERMISSION);
         IntentFilter batFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         if (Build.VERSION.SDK_INT >= 33) {
-            registerReceiver(usbReceiver, usbFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(usbManager, usbFilter, Context.RECEIVER_NOT_EXPORTED);
             registerReceiver(batteryReceiver, batFilter, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(usbReceiver, usbFilter);
+            registerReceiver(usbManager, usbFilter);
             registerReceiver(batteryReceiver, batFilter);
         }
     }
 
     public void unregisterReceivers() {
         try {
-            unregisterReceiver(usbReceiver);
+            unregisterReceiver(usbManager);
         } catch(java.lang.IllegalArgumentException ignored) {}
         try {
             unregisterReceiver(batteryReceiver);
@@ -250,36 +217,47 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     @Override
     protected void onPause() {
+        Log.d(TAG, "lifecycle onPause " +  this);
         super.onPause();
     }
 
     protected void onStop() {
+        Log.d(TAG, "lifecycle onStop " +  this);
         MavlinkNative.nativeStop(this);
-        Log.d(TAG, "onStop");
-        StopWfbNg();
         unregisterReceivers();
+        usbManager.stopAdapters();
         super.onStop();
     }
 
     protected void onResume() {
-        Log.d(TAG, "onResume");
+        Log.d(TAG, "lifecycle onResume " +  this);
         registerReceivers();
         StartVideoPlayer();
-        StartWfbNg();
-        super.onResume();
+        usbManager.startAdapters(getChannel(this));
         osdManager.restoreOSDConfig();
+        super.onResume();
+    }
+
+    public static String getCodec(Context context) {
+        return context.getSharedPreferences("general", Context.MODE_PRIVATE).getString("codec", "h265");
+    }
+
+    public static int getChannel(Context context) {
+        return context.getSharedPreferences("general", Context.MODE_PRIVATE).getInt("wifi-channel", 149);
     }
 
     @Override
     public void onChannelSettingChanged(int channel) {
-        if (activeChannel == channel) {
+        int currentChannel = getChannel(this);
+        if (currentChannel == channel) {
             return;
         }
-        SharedPreferences prefs = this.getPreferences(MODE_PRIVATE);
+        SharedPreferences prefs = this.getSharedPreferences("general", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt("wifi-channel", channel);
         editor.apply();
-        StartWfbNg();
+        usbManager.stopAdapters();
+        usbManager.startAdapters(channel);
     }
 
     @Override
@@ -287,7 +265,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         if (codec.equals(activeCodec)) {
             return;
         }
-        SharedPreferences prefs = this.getPreferences(MODE_PRIVATE);
+        SharedPreferences prefs = this.getSharedPreferences("general", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString("codec", codec);
         editor.apply();
@@ -297,8 +275,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     public synchronized void StartVideoPlayer() {
         videoPlayerH264.stop();
         videoPlayerH265.stop();
-        SharedPreferences sharedPref = this.getPreferences(MODE_PRIVATE);
-        String codec = sharedPref.getString("codec", "h265");
+        String codec = getCodec(this);
         if (codec.equals("h265")) {
             videoPlayerH265.start(codec);
             binding.svH264.setVisibility(View.INVISIBLE);
@@ -309,72 +286,6 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             binding.svH264.setVisibility(View.VISIBLE);
         }
         activeCodec=codec;
-    }
-
-    public synchronized void StartWfbNg(){
-        StopWfbNg();
-
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        int wifiChannel = sharedPref.getInt("wifi-channel", 11);
-        if (wifiChannel < 0) {
-            binding.tvMessage.setVisibility(View.VISIBLE);
-            binding.tvMessage.setText("No channel selected.");
-            return;
-        }
-        activeWifiAdapters.clear();
-        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
-        for (UsbDevice usbDevice : deviceList.values()) {
-            activeWifiAdapters.add(usbDevice);
-            Log.d(TAG, "Found adapter" + usbDevice.getDeviceName());
-        }
-        if (activeWifiAdapters.isEmpty()) {
-            binding.tvMessage.setVisibility(View.VISIBLE);
-            binding.tvMessage.setText( "No compatible wifi adapter found.");
-            return ;
-        }
-
-        UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        for (UsbDevice dev : activeWifiAdapters) {
-            if (!usbManager.hasPermission(dev)) {
-                binding.tvMessage.setVisibility(View.VISIBLE);
-                binding.tvMessage.setText("No permission for wifi adapter.");
-                PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
-                if (!permissionRefused) {
-                    usbManager.requestPermission(dev, usbPermissionIntent);
-                }
-                return;
-            }
-        }
-
-        binding.tvMessage.setVisibility(View.VISIBLE);
-        binding.tvMessage.setText( "Starting wfb-ng on channel " + wifiChannel+ ".");
-
-        wfbLink = new WfbNgLink(VideoActivity.this, usbManager, activeWifiAdapters);
-        Log.d(TAG, "wfb-ng link started.");
-        wfbLink.SetWfbNGStatsChanged(VideoActivity.this);
-        activeChannel = wifiChannel;
-        wfbThread = new Thread() {
-            @Override
-            public void run() {
-                wfbLink.Run(wifiChannel);
-                Log.d(TAG, "wfb-ng link stopped.");
-            }
-        };
-        wfbThread.start();
-    }
-
-    public synchronized void StopWfbNg() {
-        if (wfbLink == null) {
-            return;
-        }
-        wfbLink.Stop();
-        try {
-            wfbThread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        wfbLink = null;
     }
 
     @Override
@@ -389,7 +300,9 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                binding.tvMessage.setVisibility(View.INVISIBLE);
+                if (decodingInfo.currentFPS > 0) {
+                    binding.tvMessage.setVisibility(View.INVISIBLE);
+                }
                 if (decodingInfo.currentKiloBitsPerSecond > 1000) {
                     binding.tvVideoStats.setText(String.format("%dx%d@%.0f   %.1f Mbps   %.1f ms",lastVideoW, lastVideoH, decodingInfo.currentFPS, decodingInfo.currentKiloBitsPerSecond/1000, decodingInfo.avgTotalDecodingTime_ms));
                 } else {
@@ -401,14 +314,12 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     @Override
     public void onWfbNgStatsChanged(WfbNGStats data) {
-        binding.tvMessage.setVisibility(View.INVISIBLE);
-
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (data.count_p_all > 0) {
-                    int perr = data.count_p_dec_err;
-                    if (perr > 0) {
+                    binding.tvMessage.setVisibility(View.INVISIBLE);
+                    if (data.count_p_dec_err > 0) {
                         binding.tvLinkStatus.setText("Waiting for session key.");
                     } else {
                         binding.tvLinkStatus.setText(String.format("lost=%d\t\trec=%d\t\tok=%d",

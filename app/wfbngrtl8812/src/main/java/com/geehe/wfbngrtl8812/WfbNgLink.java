@@ -10,7 +10,9 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -23,29 +25,15 @@ public class WfbNgLink implements WfbNGStatsChanged{
     public static String TAG = "com.geehe.fpvue";
 
     private final long nativeWfbngLink;
-
-    private UsbManager usbManager;
-    private List<UsbDevice> usbDevices;
-    private List<Integer> usbDeviceFileDescriptors = new ArrayList<>();
-    private Timer timer;
+    private final Timer timer;
     private WfbNGStatsChanged statsChanged;
     private final Context context;
+    Map<UsbDevice, Thread> linkThreads = new HashMap<UsbDevice, Thread>();
+    Map<UsbDevice, UsbDeviceConnection> linkConns = new HashMap<UsbDevice, UsbDeviceConnection>();
 
-    public WfbNgLink(final AppCompatActivity parent, UsbManager usbManager, List<UsbDevice> usbDevices) {
+    public WfbNgLink(final AppCompatActivity parent) {
         this.context=parent;
-        this.usbManager = usbManager;
-        this.usbDevices = usbDevices;
-        for (UsbDevice usbDevice : usbDevices) {
-            UsbDeviceConnection usbDeviceConnection = usbManager.openDevice(usbDevice);
-            usbDeviceFileDescriptors.add(usbDeviceConnection.getFileDescriptor());
-        }
-        nativeWfbngLink = nativeInitialize(context, usbDeviceFileDescriptors);
-    }
-
-    public void Run(int wifiChannel) {
-        for (UsbDevice usbDevice : usbDevices) {
-            Log.d(TAG, "wfb-ng monitoring on " + usbDevice.getDeviceName() + " using wifi channel " + wifiChannel);
-        }
+        nativeWfbngLink = nativeInitialize(context);
         timer=new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -53,14 +41,42 @@ public class WfbNgLink implements WfbNGStatsChanged{
                 nativeCallBack(WfbNgLink.this, nativeWfbngLink);
             }
         },0,500);
-        nativeRun(nativeWfbngLink, context, wifiChannel);
-        Log.d(TAG, "wfb-ng done");
     }
 
-    public void Stop() {
-        timer.cancel();
-        timer.purge();
-        nativeStop(nativeWfbngLink, context);
+    public boolean isRunning() {
+        return !linkThreads.isEmpty();
+    }
+
+    public synchronized void Run(int wifiChannel, UsbDevice usbDevice) {
+        Log.d(TAG, "wfb-ng monitoring on " + usbDevice.getDeviceName() + " using wifi channel " + wifiChannel);
+        UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+        UsbDeviceConnection usbDeviceConnection = usbManager.openDevice(usbDevice);
+        int fd = usbDeviceConnection.getFileDescriptor();
+        linkThreads.put(usbDevice, new Thread(() -> nativeRun(nativeWfbngLink, context, wifiChannel, fd)));
+        linkConns.put(usbDevice, usbDeviceConnection);
+        linkThreads.get(usbDevice).start();
+        Log.d(TAG, "wfb-ng on "+ usbDevice.getDeviceName()+ " done.");
+    }
+
+    public synchronized void stopAll() throws InterruptedException {
+        for (Map.Entry<UsbDevice, UsbDeviceConnection> entry : linkConns.entrySet()) {
+            nativeStop(nativeWfbngLink, context, entry.getValue().getFileDescriptor());
+        }
+        for (Map.Entry<UsbDevice, UsbDeviceConnection> entry : linkConns.entrySet()) {
+            linkThreads.get(entry.getKey()).join();
+        }
+        linkThreads.clear();
+    }
+
+    public synchronized void stop(UsbDevice dev) throws InterruptedException {
+        UsbDeviceConnection conn = linkConns.get(dev);
+        if (conn == null) {
+            return;
+        }
+        int fd = conn.getFileDescriptor();
+        nativeStop(nativeWfbngLink, context, fd);
+        linkThreads.get(dev).join();
+        linkThreads.remove(dev);
     }
 
     public void SetWfbNGStatsChanged(final WfbNGStatsChanged callback){
@@ -76,8 +92,8 @@ public class WfbNgLink implements WfbNGStatsChanged{
     }
 
     // Native cpp methods.
-    public static native long nativeInitialize(Context context, List<Integer> fd);
-    public static native void nativeRun(long nativeInstance, Context context, int wifiChannel);
-    public static native void nativeStop(long nativeInstance, Context context);
+    public static native long nativeInitialize(Context context);
+    public static native void nativeRun(long nativeInstance, Context context, int wifiChannel, int fd);
+    public static native void nativeStop(long nativeInstance, Context context, int fd);
     public static native <T extends WfbNGStatsChanged> void nativeCallBack(T t, long nativeInstance);
 }
