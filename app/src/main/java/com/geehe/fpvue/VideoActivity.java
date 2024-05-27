@@ -192,16 +192,39 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
                 boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                         status == BatteryManager.BATTERY_STATUS_FULL;
-
-                binding.imgGSBattery.setImageResource(isCharging ? R.drawable.baseline_battery_charging_full_24 : R.drawable.baseline_battery_3_bar_24);
-
                 int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
                 int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
                 float batteryPct = level * 100 / (float)scale;
                 binding.tvGSBattery.setText((int)batteryPct+"%");
+
+                int icon = 0;
+                if (isCharging) {
+                    icon = R.drawable.baseline_battery_charging_full_24;
+                } else {
+                    if (batteryPct<=0) {
+                        icon = R.drawable.baseline_battery_0_bar_24;
+                    } else if (batteryPct<=1/7.0*100) {
+                        icon = R.drawable.baseline_battery_1_bar_24;
+                    } else if (batteryPct<=2/7.0*100) {
+                        icon = R.drawable.baseline_battery_2_bar_24;
+                    } else if (batteryPct<=3/7.0*100) {
+                        icon = R.drawable.baseline_battery_3_bar_24;
+                    } else if (batteryPct<=4/7.0*100) {
+                        icon = R.drawable.baseline_battery_4_bar_24;
+                    } else if (batteryPct<=5/7.0*100) {
+                        icon = R.drawable.baseline_battery_5_bar_24;
+                    } else if (batteryPct<=6/7.0*100) {
+                        icon = R.drawable.baseline_battery_6_bar_24;
+                    } else {
+                        icon = R.drawable.baseline_battery_full_24;
+                    }
+                }
+                binding.imgGSBattery.setImageResource(icon);
             }
         };
+    }
 
+    public void registerReceivers(){
         IntentFilter usbFilter = new IntentFilter();
         usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
@@ -216,6 +239,15 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         }
     }
 
+    public void unregisterReceivers() {
+        try {
+            unregisterReceiver(usbReceiver);
+        } catch(java.lang.IllegalArgumentException ignored) {}
+        try {
+            unregisterReceiver(batteryReceiver);
+        } catch(java.lang.IllegalArgumentException ignored) {}
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -223,19 +255,15 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     protected void onStop() {
         MavlinkNative.nativeStop(this);
-        try {
-            unregisterReceiver(usbReceiver);
-        } catch(java.lang.IllegalArgumentException ignored) {}
-        try {
-            unregisterReceiver(batteryReceiver);
-        } catch(java.lang.IllegalArgumentException ignored) {}
         Log.d(TAG, "onStop");
         StopWfbNg();
+        unregisterReceivers();
         super.onStop();
     }
 
     protected void onResume() {
-        Log.d(TAG, "onResume StartWfbNg, StartVideoPlayer");
+        Log.d(TAG, "onResume");
+        registerReceivers();
         StartVideoPlayer();
         StartWfbNg();
         super.onResume();

@@ -45,28 +45,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    ndkVersion = "21.0.6113669"
-//    packaging {
-//        jniLibs {
-//            excludes += "**.so"
-//        }
-//    }
-
-//    buildTypes {
-//        debug {
-//            manifestPlaceholders["usesCleartextTraffic"] = "true"
-//            isJniDebuggable = true
-//            isMinifyEnabled = false
-//            packaging {
-//                jniLibs.keepDebugSymbols.add("*/**/*.so")
-//            }
-//        }
-//    }
-
-
-//    ndk {
-//        debugSymbolLevel 'FULL'
-//    }
 }
 
 dependencies {
