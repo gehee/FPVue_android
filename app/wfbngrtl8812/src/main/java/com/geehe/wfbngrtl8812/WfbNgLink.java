@@ -52,7 +52,9 @@ public class WfbNgLink implements WfbNGStatsChanged{
         UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         UsbDeviceConnection usbDeviceConnection = usbManager.openDevice(usbDevice);
         int fd = usbDeviceConnection.getFileDescriptor();
-        linkThreads.put(usbDevice, new Thread(() -> nativeRun(nativeWfbngLink, context, wifiChannel, fd)));
+        Thread t = new Thread(() -> nativeRun(nativeWfbngLink, context, wifiChannel, fd));
+        t.setName("wfb-"+usbDevice.getDeviceName().split("/dev/bus/usb/")[1]);
+        linkThreads.put(usbDevice, t);
         linkConns.put(usbDevice, usbDeviceConnection);
         linkThreads.get(usbDevice).start();
         Log.d(TAG, "wfb-ng on "+ usbDevice.getDeviceName()+ " done.");

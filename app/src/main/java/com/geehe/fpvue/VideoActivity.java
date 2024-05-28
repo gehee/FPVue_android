@@ -226,15 +226,17 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         MavlinkNative.nativeStop(this);
         unregisterReceivers();
         usbManager.stopAdapters();
+        stopVideoPlayer();
         super.onStop();
     }
 
     protected void onResume() {
-        Log.d(TAG, "lifecycle onResume " +  this);
-        registerReceivers();
-        StartVideoPlayer();
-        usbManager.startAdapters(getChannel(this));
-        osdManager.restoreOSDConfig();
+        if (!wfbLink.isRunning()){
+            registerReceivers();
+            startVideoPlayer();
+            usbManager.startAdapters(getChannel(this));
+            osdManager.restoreOSDConfig();
+        }
         super.onResume();
     }
 
@@ -269,12 +271,11 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString("codec", codec);
         editor.apply();
-        StartVideoPlayer();
+        stopVideoPlayer();
+        startVideoPlayer();
     }
 
-    public synchronized void StartVideoPlayer() {
-        videoPlayerH264.stop();
-        videoPlayerH265.stop();
+    public synchronized void startVideoPlayer() {
         String codec = getCodec(this);
         if (codec.equals("h265")) {
             videoPlayerH265.start(codec);
@@ -286,6 +287,11 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             binding.svH264.setVisibility(View.VISIBLE);
         }
         activeCodec=codec;
+    }
+
+    public synchronized void stopVideoPlayer() {
+        videoPlayerH264.stop();
+        videoPlayerH265.stop();
     }
 
     @Override
@@ -322,9 +328,10 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                     if (data.count_p_dec_err > 0) {
                         binding.tvLinkStatus.setText("Waiting for session key.");
                     } else {
-                        binding.tvLinkStatus.setText(String.format("lost=%d\t\trec=%d\t\tok=%d",
+                        binding.tvLinkStatus.setText(String.format("lost=%d\t\trec=%d\t\tok=%d\t\tout=%d",
                                 data.count_p_lost,
-                                data.count_p_fec_recovered ,
+                                data.count_p_fec_recovered,
+                                data.count_p_dec_ok,
                                 data.count_p_outgoing));
                     }
                 } else {
