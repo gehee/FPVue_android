@@ -69,7 +69,6 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "lifecycle onCreate " +  this);
         super.onCreate(savedInstanceState);
         binding = ActivityVideoBinding.inflate(getLayoutInflater());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -110,7 +109,6 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         PieData noData = new PieData(new PieDataSet(new ArrayList<>(), ""));
         chart.setData(noData);
 
-        SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
         binding.btnSettings.setOnClickListener(v -> {
             CascadePopupMenuCheckable popup = new CascadePopupMenuCheckable(VideoActivity.this, v);
 
@@ -129,7 +127,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             }
 
             // Codecs
-            String codecPref = prefs.getString("codec", "h265");
+            String codecPref = getCodec(this);
             SubMenu codecMenu = popup.getMenu().addSubMenu("Codec");
             codecMenu.setHeaderTitle("Current: " + codecPref);
 
@@ -267,10 +265,12 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     public synchronized void startVideoPlayer() {
         String codec = getCodec(this);
         if (codec.equals("h265")) {
+            videoPlayerH264.stop();
             videoPlayerH265.start(codec);
             binding.svH264.setVisibility(View.INVISIBLE);
             binding.svH265.setVisibility(View.VISIBLE);
         } else {
+            videoPlayerH265.stop();
             videoPlayerH264.start(codec);
             binding.svH265.setVisibility(View.INVISIBLE);
             binding.svH264.setVisibility(View.VISIBLE);
