@@ -63,11 +63,10 @@ public class OSDManager  {
 
     public void onOSDItemCheckChanged(OSDElement element, boolean isChecked) {
         // Show or hide the ImageView corresponding to the checkbox position
-        MovableLayout item = element.layout;
-        item.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        element.layout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         SharedPreferences prefs = context.getSharedPreferences( "osd_config", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean(item.getId()+"_enabled", isChecked);
+        editor.putBoolean(element.prefName()+"_enabled", isChecked);
         editor.apply();
     }
 
@@ -115,17 +114,17 @@ public class OSDManager  {
         restoreOSDConfig();
     }
 
-    public boolean isElementEnabled(int resId) {
+    public boolean isElementEnabled(OSDElement elem) {
         SharedPreferences prefs = context.getSharedPreferences( "osd_config", MODE_PRIVATE);
-        return prefs.getBoolean(resId+"_enabled", false);
+        return prefs.getBoolean(elem.prefName()+"_enabled", false);
     }
 
     public void restoreOSDConfig() {
         SharedPreferences prefs = context.getSharedPreferences( "osd_config", MODE_PRIVATE);
         for (OSDElement element : listOSDItems) {
-            boolean enabled = prefs.getBoolean(element.layout.getId()+"_enabled", false);
+            boolean enabled = prefs.getBoolean(element.prefName()+"_enabled", false);
             onOSDItemCheckChanged(element, enabled);
-            element.layout.restorePosition();
+            element.layout.restorePosition(element.prefName());
             element.layout.setMovable(!isOSDLocked());
         }
     }

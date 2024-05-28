@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.WindowManager;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -13,8 +14,9 @@ public class MovableLayout extends LinearLayout {
     private float dX, dY;
     private SharedPreferences preferences;
     private boolean isMovable = false;
-
     private float defaultX,defaultY;
+
+    private String prefName;
 
     public MovableLayout(Context context) {
         super(context);
@@ -70,14 +72,15 @@ public class MovableLayout extends LinearLayout {
 
     private void savePosition() {
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putFloat(getId() + "_x", getX());
-        editor.putFloat(getId() + "_y", getY());
+        editor.putFloat(prefName + "_x", getX());
+        editor.putFloat(prefName + "_y", getY());
         editor.apply();
     }
 
-    public void restorePosition() {
-        float x = preferences.getFloat(getId() + "_x", defaultX);
-        float y = preferences.getFloat(getId() + "_y", defaultY);
+    public void restorePosition(String prefName_) {
+        prefName=prefName_;
+        float x = preferences.getFloat(prefName + "_x", defaultX);
+        float y = preferences.getFloat(prefName + "_y", defaultY);
         setX(x);
         setY(y);
     }

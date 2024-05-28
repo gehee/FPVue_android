@@ -10,4 +10,8 @@ public class OSDElement{
         name = n;
         layout = l;
     }
+
+    public String prefName() {
+        return String.format("%d",name.hashCode());
+    }
 }

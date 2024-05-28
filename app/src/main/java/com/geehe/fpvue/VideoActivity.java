@@ -149,7 +149,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             for (OSDElement element: osdManager.listOSDItems) {
                 MenuItem itm = osd.add(element.name);
                 itm.setCheckable(true);
-                itm.setChecked(osdManager.isElementEnabled(element.layout.getId()));
+                itm.setChecked(osdManager.isElementEnabled(element));
                 itm.setOnMenuItemClickListener(item -> {
                     item.setChecked(!item.isChecked());
                     osdManager.onOSDItemCheckChanged(element, item.isChecked());
@@ -254,6 +254,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     @Override
     protected void onResume() {
+        // On resume can be called when a device is attached, make sure wfb is not running already.
         if (!wfbLink.isRunning()){
             registerReceivers();
             startVideoPlayer();
@@ -261,6 +262,25 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             osdManager.restoreOSDConfig();
         }
         super.onResume();
+    }
+
+    public synchronized void startVideoPlayer() {
+        String codec = getCodec(this);
+        if (codec.equals("h265")) {
+            videoPlayerH265.start(codec);
+            binding.svH264.setVisibility(View.INVISIBLE);
+            binding.svH265.setVisibility(View.VISIBLE);
+        } else {
+            videoPlayerH264.start(codec);
+            binding.svH265.setVisibility(View.INVISIBLE);
+            binding.svH264.setVisibility(View.VISIBLE);
+        }
+        activeCodec=codec;
+    }
+
+    public synchronized void stopVideoPlayer() {
+        videoPlayerH264.stop();
+        videoPlayerH265.stop();
     }
 
     public static String getCodec(Context context) {
@@ -298,25 +318,6 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         startVideoPlayer();
     }
 
-    public synchronized void startVideoPlayer() {
-        String codec = getCodec(this);
-        if (codec.equals("h265")) {
-            videoPlayerH265.start(codec);
-            binding.svH264.setVisibility(View.INVISIBLE);
-            binding.svH265.setVisibility(View.VISIBLE);
-        } else {
-            videoPlayerH264.start(codec);
-            binding.svH265.setVisibility(View.INVISIBLE);
-            binding.svH264.setVisibility(View.VISIBLE);
-        }
-        activeCodec=codec;
-    }
-
-    public synchronized void stopVideoPlayer() {
-        videoPlayerH264.stop();
-        videoPlayerH265.stop();
-    }
-
     @Override
     public void onVideoRatioChanged(final int videoW,final int videoH) {
         lastVideoW=videoW;
@@ -348,6 +349,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             public void run() {
                 if (data.count_p_all > 0) {
                     binding.tvMessage.setVisibility(View.INVISIBLE);
+                    binding.tvMessage.setText("");
                     if (data.count_p_dec_err > 0) {
                         binding.tvLinkStatus.setText("Waiting for session key.");
                     } else {
