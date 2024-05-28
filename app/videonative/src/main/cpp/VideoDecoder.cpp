@@ -110,11 +110,11 @@ void VideoDecoder::configureStartDecoder(){
 
     AMediaFormat* format=AMediaFormat_new();
     AMediaFormat_setString(format,AMEDIAFORMAT_KEY_MIME,MIME.c_str());
-    AMediaFormat_setInt32(format, "low-latency", 1);
-    AMediaFormat_setInt32(format, "vendor.low-latency.enable", 1);
-    AMediaFormat_setInt32(format, "vendor.qti-ext-dec-low-latency.enable", 1);
-    AMediaFormat_setInt32(format, "vendor.hisi-ext-low-latency-video-dec.video-scene-for-low-latency-req", 1);
-    AMediaFormat_setInt32(format, "vendor.rtc-ext-dec-low-latency.enable", 1);
+//    AMediaFormat_setInt32(format, "low-latency", 1);
+//    AMediaFormat_setInt32(format, "vendor.low-latency.enable", 1);
+//    AMediaFormat_setInt32(format, "vendor.qti-ext-dec-low-latency.enable", 1);
+//    AMediaFormat_setInt32(format, "vendor.hisi-ext-low-latency-video-dec.video-scene-for-low-latency-req", 1);
+//    AMediaFormat_setInt32(format, "vendor.rtc-ext-dec-low-latency.enable", 1);
 //    MediaCodec supports two priorities: 0 - realtime, 1 - best effort
 //    AMediaFormat_setInt32(format, "priority", 0);
     if(IS_H265){
