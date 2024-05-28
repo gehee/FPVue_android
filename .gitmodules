@@ -8,3 +8,8 @@
 	url = https://github.com/svpcom/wfb-ng.git
 	branch = master
 
+[submodule "app/video/src/main/cpp/enet"]
+	path = app/video/src/main/cpp/enet
+	url = https://github.com/lsalzman/enet.git
+	branch = master
+

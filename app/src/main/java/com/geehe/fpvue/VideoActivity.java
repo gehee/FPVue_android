@@ -12,13 +12,10 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-<<<<<<< HEAD
 import android.view.MenuItem;
 import android.view.SubMenu;
-=======
 import android.view.Surface;
 import android.view.SurfaceHolder;
->>>>>>> 30dab9b (Import moonlight decoder; need rewrite for udp/rtp connection)
 import android.view.View;
 import android.view.WindowManager;
 
@@ -62,7 +59,7 @@ import me.saket.cascade.CascadePopupMenuCheckable;
 
 // Most basic implementation of an activity that uses VideoNative to stream a video
 // Into an Android Surface View
-public class VideoActivity extends AppCompatActivity implements IVideoParamsChanged, WfbNGStatsChanged, MavlinkUpdate, SettingsChanged, PerfOverlayListener, SurfaceHolder.Callback {
+public class VideoActivity extends AppCompatActivity implements PerfOverlayListener, IVideoParamsChanged, WfbNGStatsChanged, MavlinkUpdate, SettingsChanged, SurfaceHolder.Callback {
     private ActivityVideoBinding binding;
     protected DecodingInfo mDecodingInfo;
     int lastVideoW=0,lastVideoH=0;
@@ -550,5 +547,10 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             }
         }
         return file.getAbsolutePath();
+    }
+
+    @Override
+    public void onPerfUpdate(String text) {
+        Log.d(TAG, "perf: " + text);
     }
 }

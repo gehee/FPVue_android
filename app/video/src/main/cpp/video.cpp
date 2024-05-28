@@ -26,8 +26,6 @@ JNIEXPORT jint JNICALL
 Java_com_geehe_video_MoonBridge_start(JNIEnv *env, jclass clazz, jint socket) {
 //    initializeVideoDepacketizer();
 //    RtpvInitializeQueue();
-
-
 }
 extern "C"
 JNIEXPORT jint JNICALL
