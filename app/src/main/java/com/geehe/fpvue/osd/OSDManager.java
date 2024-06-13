@@ -178,7 +178,7 @@ public class OSDManager  {
             binding.tvAirSpeed.setText(formatFloat((float) (data.telemetryVspeed / 100.0f - 1000.0), "m/s", ""));
             binding.tvSats.setText(formatFloat(data.telemetrySats, "", ""));
             binding.tvLat.setText(String.format("%.7f", (float)(data.telemetryLat / 10000000.0f)));
-            binding.tvLat.setText(String.format("%.7f", (float)(data.telemetryLon / 10000000.0f)));
+            binding.tvLon.setText(String.format("%.7f", (float)(data.telemetryLon / 10000000.0f)));
 
             if(data.telemetryArm == 1) {
                 float heading_home = OSDToCourse(data.telemetryLat, data.telemetryLon, data.telemetryLatBase, data.telemetryLonBase);
