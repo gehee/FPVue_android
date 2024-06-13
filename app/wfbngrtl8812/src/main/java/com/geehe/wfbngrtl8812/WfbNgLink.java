@@ -47,6 +47,10 @@ public class WfbNgLink implements WfbNGStatsChanged{
         return !linkThreads.isEmpty();
     }
 
+    public void refreshKey(){
+        nativeRefreshKey(nativeWfbngLink);
+    }
+
     public synchronized void Run(int wifiChannel, UsbDevice usbDevice) {
         Log.d(TAG, "wfb-ng monitoring on " + usbDevice.getDeviceName() + " using wifi channel " + wifiChannel);
         UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
@@ -97,5 +101,6 @@ public class WfbNgLink implements WfbNGStatsChanged{
     public static native long nativeInitialize(Context context);
     public static native void nativeRun(long nativeInstance, Context context, int wifiChannel, int fd);
     public static native void nativeStop(long nativeInstance, Context context, int fd);
+    public static native void nativeRefreshKey(long nativeInstance);
     public static native <T extends WfbNGStatsChanged> void nativeCallBack(T t, long nativeInstance);
 }

@@ -11,6 +11,7 @@ class WfbngLink{
 public:
     WfbngLink(JNIEnv * env, jobject context);
     int run(JNIEnv *env,jobject androidContext, jint wifiChannel, jint fd);
+    void initAgg();
     void stop(JNIEnv *env,jobject androidContext, jint fd);
 
     std::mutex agg_mutex;

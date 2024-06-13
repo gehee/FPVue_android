@@ -35,6 +35,12 @@ std::string uint8_to_hex_string(const uint8_t *v, const size_t s) {
 }
 
 WfbngLink::WfbngLink(JNIEnv* env, jobject context) {
+    initAgg();
+    Logger_t log;
+    wifi_driver = std::make_unique<WiFiDriver>(log);
+}
+
+void WfbngLink::initAgg() {
     // TODO(geehe) Get that from the android UI.
     int video_client_port = 5600;
     int mavlink_client_port = 14550;
@@ -51,9 +57,6 @@ WfbngLink::WfbngLink(JNIEnv* env, jobject context) {
 
     video_aggregator = std::make_unique<Aggregator>(client_addr, video_client_port, keyPath, epoch, video_channel_id_f);
     mavlink_aggregator = std::make_unique<Aggregator>(client_addr, mavlink_client_port, keyPath, epoch, mavlink_channel_id_f);
-
-    Logger_t log;
-    wifi_driver = std::make_unique<WiFiDriver>(log);
 }
 
 int WfbngLink::run(JNIEnv* env, jobject context, jint wifiChannel, jint fd) {
@@ -227,4 +230,10 @@ Java_com_geehe_wfbngrtl8812_WfbNgLink_nativeCallBack(JNIEnv *env, jclass clazz, 
     }
     env->CallVoidMethod(wfbStatChangedI,onStatsChanged,stats);
     aggregator->clear_stats();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_geehe_wfbngrtl8812_WfbNgLink_nativeRefreshKey(JNIEnv * env, jclass clazz,jlong wfbngLinkN) {
+    native(wfbngLinkN)->initAgg();
 }

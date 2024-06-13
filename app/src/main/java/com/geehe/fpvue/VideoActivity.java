@@ -5,18 +5,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.WindowManager;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.geehe.fpvue.databinding.ActivityVideoBinding;
@@ -37,6 +39,7 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -66,6 +69,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     VideoPlayer videoPlayerH264;
     VideoPlayer videoPlayerH265;
     private String activeCodec;
+    private static final int PICK_DOCUMENT_REQUEST_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +78,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Init wfb ng.
+        setDefaultGsKey();
         copyGSKey();
         wfbLink = new WfbNgLink(VideoActivity.this);
         wfbLink.SetWfbNGStatsChanged(VideoActivity.this);
@@ -155,6 +160,16 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 });
             }
 
+            // gs.key
+            MenuItem keyBtn = popup.getMenu().add("gs.key");
+            keyBtn.setOnMenuItemClickListener(item -> {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*");
+                startActivityForResult(intent, PICK_DOCUMENT_REQUEST_CODE);
+                return true;
+            });
+
             String lockLabel = osdManager.isOSDLocked() ? "Unlock OSD" : "Lock OSD";
             MenuItem lock = popup.getMenu().add(lockLabel);
             lock.setOnMenuItemClickListener(item -> {
@@ -210,6 +225,59 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 binding.imgGSBattery.setImageResource(icon);
             }
         };
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_DOCUMENT_REQUEST_CODE && resultCode == RESULT_OK) {
+            if (data != null) {
+                Uri uri = data.getData();
+                Log.d(TAG, "Selected file " + uri);
+                try {
+                    InputStream inputStream = getContentResolver().openInputStream(uri);
+                    setGsKey(inputStream);
+                    copyGSKey();
+                    wfbLink.refreshKey();
+                    inputStream.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to import gs.key from " + uri);
+                }
+            }
+        }
+    }
+
+    public void setDefaultGsKey() {
+        if (getGsKey().length > 0 ){
+            Log.d(TAG,  "gs.key already saved in preferences.");
+            return;
+        }
+        try {
+            Log.d(TAG,  "Importing default gs.key...");
+            InputStream inputStream =  getAssets().open("gs.key");;
+            setGsKey(inputStream);
+            inputStream.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to import default gs.key");
+        }
+    }
+
+    public byte[] getGsKey() {
+        String pref = getSharedPreferences("general", Context.MODE_PRIVATE).getString("gs.key", "");
+        return Base64.decode(pref, Base64.DEFAULT);
+    }
+
+    public void setGsKey(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = inputStream.read(buffer)) != -1) {
+            result.write(buffer, 0, length);
+        }
+        SharedPreferences prefs = this.getSharedPreferences("general", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("gs.key", Base64.encodeToString(result.toByteArray(), Base64.DEFAULT));
+        editor.apply();
     }
 
     public void registerReceivers(){
@@ -415,31 +483,31 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         return sb.toString();
     }
 
-    private String copyGSKey() {
-        AssetManager assetManager = getAssets();
+    public static String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b: bytes) {
+            String hex = Integer.toHexString(0xFF & b);
+            if (hex.length() == 1) {
+                // Append a leading zero for single digit hex values
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    private void copyGSKey() {
         File file = new File(getApplicationContext().getFilesDir(), "gs.key");
-        Log.d(TAG, "Copying file to " + file.getAbsolutePath());
-        InputStream in = null;
         OutputStream out = null;
         try {
-            in = assetManager.open("gs.key");
+            byte[] keyBytes = getGsKey();
+            Log.d(TAG, "Using gs.key:"+bytesToHex(keyBytes)+"; Copying to" + file.getAbsolutePath());
             out = new FileOutputStream(file);
-            byte[] buffer = new byte[1024];
-            int read;
-            while((read = in.read(buffer)) != -1){
-                out.write(buffer, 0, read);
-            }
+            out.write(keyBytes, 0, keyBytes.length);
         } catch(IOException e) {
             Log.e("tag", "Failed to copy asset", e);
         }
         finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    // NOOP
-                }
-            }
             if (out != null) {
                 try {
                     out.close();
@@ -448,6 +516,5 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 }
             }
         }
-        return file.getAbsolutePath();
     }
 }
