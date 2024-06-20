@@ -18,10 +18,12 @@ Feel free to send pull requests to add new supported wifi adapters hardware IDs.
 
 ## Build
 
-`git clone https://github.com/gehee/FPVue_android.git`
-`cd FPVue_android`
-`git submodule init`
-`git submodule update`
+```
+git clone https://github.com/gehee/FPVue_android.git
+cd FPVue_android
+git submodule init
+git submodule update
+```
 
 The project can then be opened in android studio and built from there.
 
