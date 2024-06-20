@@ -7,6 +7,8 @@
 #include <android/native_window_jni.h>
 #include <android/asset_manager_jni.h>
 #include <android/log.h>
+#include "time_util.h"
+#include <fstream>
 
 VideoPlayer::VideoPlayer(JNIEnv* env, jobject context) :
         mParser{std::bind(&VideoPlayer::onNewNALU, this, std::placeholders::_1)},
@@ -24,9 +26,62 @@ VideoPlayer::VideoPlayer(JNIEnv* env, jobject context) :
     });
 }
 
+static int write_callback(int64_t offset, const void *buffer, size_t size, void *token){
+    FILE *f = (FILE*)token;
+    fseek(f, offset, SEEK_SET);
+    return fwrite(buffer, 1, size, f) != size;
+}
+
+void VideoPlayer::processQueue() {
+        ::FILE * fout = fdopen(dvr_fd, "wb");
+        MP4E_mux_t *mux = MP4E_open(0 /*sequential_mode*/, 0 /*fragmentation_mode*/, fout, write_callback);
+        mp4_h26x_writer_t mp4wr;
+        float framerate = 0;
+
+        while (true) {
+            std::unique_lock<std::mutex> lock(mtx);
+            cv.wait(lock, [this] { return !naluQueue.empty() || stopFlag; });
+            if (stopFlag && naluQueue.empty()) {
+                break;
+            }
+            if (!naluQueue.empty()) {
+                NALU nalu = naluQueue.front();
+                if (framerate == 0) {
+                    if (latestDecodingInfo.currentFPS <= 0) {
+                        continue;
+                    }
+                    if (MP4E_STATUS_OK != mp4_h26x_write_init(&mp4wr, mux, latestVideoRatio.width, latestVideoRatio.height, nalu.IS_H265_PACKET))
+                    {
+                        __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "error: mp4_h26x_write_init failed");
+                    }
+                    framerate = latestDecodingInfo.currentFPS;
+                    __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "mp4 init with fps=%.2f, res=%dx%d, hevc=%d", framerate, latestVideoRatio.width, latestVideoRatio.height, nalu.IS_H265_PACKET);
+                }
+                naluQueue.pop();
+                lock.unlock();
+                // Process the NALU
+                auto res = mp4_h26x_write_nal(&mp4wr, nalu.getData(), nalu.getSize(), 90000/framerate);
+                if (MP4E_STATUS_OK != res) {
+                    __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "mp4_h26x_write_nal failed with %d", res);
+                }
+            }
+        }
+
+        MP4E_close(mux);
+        mp4_h26x_write_close(&mp4wr);
+        if (fout) {
+            fclose(fout);
+            fout = NULL;
+        }
+        if (dvr_fd > 0) {
+            close(dvr_fd);
+            dvr_fd = -1;
+        }
+        __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "dvr thread done");
+    }
+
 //Not yet parsed bit stream (e.g. raw h264 or rtp data)
 void VideoPlayer::onNewVideoData(const uint8_t* data, const std::size_t data_length,const VIDEO_DATA_TYPE videoDataType){
-
     //MLOGD << "onNewVideoData " << data_length;
     switch(videoDataType){
         case VIDEO_DATA_TYPE::RTP_H264:
@@ -43,104 +98,22 @@ void VideoPlayer::onNewVideoData(const uint8_t* data, const std::size_t data_len
             mParser.parse_rtp_h265_stream(data,data_length);
             break;
         case VIDEO_DATA_TYPE::RAW_H265:
-            MLOGD << "onNewVideoData RTP_H265 " << data_length;
+//            MLOGD << "onNewVideoData RTP_H265 " << data_length;
             //mParser.parse_raw_h265_stream(data,data_length);
             break;
     }
 }
 
-void VideoPlayer::rtpToNalu(const uint8_t* data, const std::size_t data_length) {
-    uint32_t rtp_header = 0;
-    if (data[8] & 0x80 && data[9] & 0x60) {
-        rtp_header = 12;
-    }
-    uint32_t nal_size = 0;
-    uint8_t* nal_buffer = static_cast<uint8_t *>(malloc(1024 * 1024));
-    uint8_t* nal = decodeRTPFrame(data, data_length, rtp_header, nal_buffer, &nal_size);
-    if (!nal) {
-        MLOGD << "no frame";
-        return;
-    }
-    if (nal_size < 5) {
-        MLOGD << "rtpToNalu broken frame";
-        return;
-    }
-    uint8_t nal_type_hevc = (nal[4] >> 1) & 0x3F;
-    __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "nal_type_hevc=%d",nal_type_hevc);
-
-}
-
-uint8_t* VideoPlayer::decodeRTPFrame(const uint8_t* rx_buffer, uint32_t rx_size, uint32_t header_size, uint8_t* nal_buffer, uint32_t* out_nal_size){
-    rx_buffer += header_size;
-    rx_size -= header_size;
-
-    // Get NAL type
-    uint8_t fragment_type_avc = rx_buffer[0] & 0x1F;
-    uint8_t fragment_type_hevc = (rx_buffer[0] >> 1) & 0x3F;
-
-    uint8_t start_bit = 0;
-    uint8_t end_bit = 0;
-    uint8_t copy_size = 4;
-
-    if (fragment_type_avc == 28 || fragment_type_hevc == 49) {
-        if (fragment_type_avc == 28) {
-            start_bit = rx_buffer[1] & 0x80;
-            end_bit = rx_buffer[1] & 0x40;
-            nal_buffer[4] = (rx_buffer[0] & 0xE0) | (rx_buffer[1] & 0x1F);
-        } else {
-            start_bit = rx_buffer[2] & 0x80;
-            end_bit = rx_buffer[2] & 0x40;
-            nal_buffer[4] = (rx_buffer[0] & 0x81) | (rx_buffer[2] & 0x3F) << 1;
-            nal_buffer[5] = 1;
-            copy_size++;
-            rx_buffer++;
-            rx_size--;
-        }
-
-        rx_buffer++;
-        rx_size--;
-
-        if (start_bit) {
-            // Write NAL header
-            nal_buffer[0] = 0;
-            nal_buffer[1] = 0;
-            nal_buffer[2] = 0;
-            nal_buffer[3] = 1;
-
-            // Copy data
-            memcpy(nal_buffer + copy_size, rx_buffer, rx_size);
-            in_nal_size = rx_size + copy_size;
-        } else {
-            rx_buffer++;
-            rx_size--;
-            memcpy(nal_buffer + in_nal_size, rx_buffer, rx_size);
-            in_nal_size += rx_size;
-
-            if (end_bit) {
-                *out_nal_size = in_nal_size;
-                in_nal_size = 0;
-                return nal_buffer;
-            }
-        }
-
-        return NULL;
-    } else {
-        // Write NAL header
-        nal_buffer[0] = 0;
-        nal_buffer[1] = 0;
-        nal_buffer[2] = 0;
-        nal_buffer[3] = 1;
-        memcpy(nal_buffer + copy_size, rx_buffer, rx_size);
-        *out_nal_size = rx_size + copy_size;
-        in_nal_size = 0;
-
-        // Return NAL
-        return nal_buffer;
-    }
-}
-
 void VideoPlayer::onNewNALU(const NALU& nalu){
     videoDecoder.interpretNALU(nalu);
+    if (dvr_fd <= 0 || latestDecodingInfo.currentFPS <= 0) {
+        return;
+    }
+    // Copy data to write if from a different thread.
+    uint8_t* m_data_copy = new uint8_t[nalu.getSize()];
+    memcpy(m_data_copy, nalu.getData(), nalu.getSize());
+    NALU nalu_(m_data_copy, nalu.getSize(), nalu.IS_H265_PACKET);
+    enqueueNALU(nalu_);
 }
 
 void VideoPlayer::setVideoSurface(JNIEnv *env, jobject surface) {
@@ -183,6 +156,22 @@ std::string VideoPlayer::getInfoString()const{
         ss << "Not receiving udp raw / rtp / rtsp";
     }
     return ss.str();
+}
+
+
+void VideoPlayer::startDvr(JNIEnv *env, jint fd) {
+    dvr_fd = dup(fd);
+
+    __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "dvr_fd=%d", dvr_fd);
+    if (dvr_fd == -1) {
+        __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "Failed to duplicate dvr file descriptor");
+        return;
+    }
+    startProcessing();
+}
+
+void VideoPlayer::stopDvr() {
+    stopProcessing();
 }
 
 
@@ -295,4 +284,17 @@ JNI_METHOD(void,nativeCallBack)
 }
 
 
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_geehe_videonative_VideoPlayer_nativeStartDvr(JNIEnv *env, jclass clazz,
+                                                        jlong native_instance,
+                                                        jint fd) {
+    native(native_instance)->startDvr(env, fd);
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_geehe_videonative_VideoPlayer_nativeStopDvr(JNIEnv *env, jclass clazz, jlong native_instance) {
+    native(native_instance)->stopDvr();
 }

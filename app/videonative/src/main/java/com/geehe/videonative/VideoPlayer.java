@@ -69,6 +69,14 @@ public class VideoPlayer implements IVideoParamsChanged{
         nativeStop(nativeVideoPlayer, context);
     }
 
+    public void startDvr(int fd) {
+        nativeStartDvr(nativeVideoPlayer, fd);
+    }
+
+    public void stopDvr() {
+        nativeStopDvr(nativeVideoPlayer);
+    }
+
     /**
      * Depending on the selected Settings, this starts either
      * a) Receiving RTP over UDP
@@ -173,6 +181,9 @@ public class VideoPlayer implements IVideoParamsChanged{
     public static native void nativeStart(long nativeInstance,Context context, String codec);
     public static native void nativeStop(long nativeInstance,Context context);
     public static native void nativeSetVideoSurface(long nativeInstance, Surface surface);
+
+    public static native void nativeStartDvr(long nativeInstance, int fd);
+    public static native void nativeStopDvr(long nativeInstance);
 
     //get members or other information. Some might be only usable in between (nativeStart <-> nativeStop)
     public static native String getVideoInfoString(long nativeInstance);

@@ -112,7 +112,7 @@ void RTPDecoder::parseRTPH264toNALU(const uint8_t* rtp_data, const size_t data_l
         MLOGD<<"Not enough rtp data";
         return;
     }
-    MLOGD<<"Got h264 rtp data";
+//    MLOGD<<"Got h264 rtp data";
     const RTP::RTPPacketH264 rtpPacket(rtp_data,data_length);
     //MLOGD<<"RTP Header: "<<rtp_header->asString();
     if(!validateRTPPacket(rtpPacket.header)){

@@ -17,6 +17,10 @@
 #include <optional>
 #include <assert.h>
 #include <memory>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <cstdint> // for uint8_t
 
 #include "NALUnitType.hpp"
 
@@ -162,6 +166,18 @@ public:
        return (nut==NALUnitType::H264::NAL_UNIT_TYPE_CODED_SLICE_NON_IDR);
    }
    // XXX -----------
+
+    std::string getDataAsHexString() const {
+        std::stringstream ss;
+        ss << std::hex << std::setfill('0');
+
+        for (size_t i = 0; i < getSize(); ++i) {
+            ss << std::setw(2) << static_cast<int>(getData()[i]);
+        }
+
+        return ss.str();
+    }
+
    // For debugging, return the whole NALU data as a big string for logging
 //   std::string dataAsString()const{
 //       return StringHelper::vectorAsString(std::vector<uint8_t>(getData(),getData()+getSize()));

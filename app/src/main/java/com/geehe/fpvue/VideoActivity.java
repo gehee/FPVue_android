@@ -1,28 +1,38 @@
 package com.geehe.fpvue;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.geehe.fpvue.databinding.ActivityVideoBinding;
 import com.geehe.fpvue.osd.OSDElement;
+import com.geehe.fpvue.osd.OSDManager;
 import com.geehe.mavlink.MavlinkData;
 import com.geehe.mavlink.MavlinkNative;
 import com.geehe.mavlink.MavlinkUpdate;
@@ -32,11 +42,10 @@ import com.geehe.videonative.VideoPlayer;
 import com.geehe.wfbngrtl8812.WfbNGStats;
 import com.geehe.wfbngrtl8812.WfbNGStatsChanged;
 import com.geehe.wfbngrtl8812.WfbNgLink;
-import com.geehe.fpvue.osd.OSDManager;
 import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 
 import java.io.ByteArrayOutputStream;
@@ -45,16 +54,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import me.saket.cascade.CascadePopupMenuCheckable;
 
-
 // Most basic implementation of an activity that uses VideoNative to stream a video
 // Into an Android Surface View
 public class VideoActivity extends AppCompatActivity implements IVideoParamsChanged, WfbNGStatsChanged, MavlinkUpdate, SettingsChanged {
+    private static final int PICK_DOCUMENT_REQUEST_CODE = 1;
+    private static final int REQUEST_WRITE_PERMISSION = 2;
+
     private ActivityVideoBinding binding;
     protected DecodingInfo mDecodingInfo;
     int lastVideoW=0,lastVideoH=0;
@@ -69,7 +82,8 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     VideoPlayer videoPlayerH264;
     VideoPlayer videoPlayerH265;
     private String activeCodec;
-    private static final int PICK_DOCUMENT_REQUEST_CODE = 1;
+
+    private ParcelFileDescriptor dvrFd = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,7 +99,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         usbManager = new UsbManager(this, binding, wfbLink);
         usbManager.initWifiAdapters();
 
-        // Setup video player
+        // Setup video players
         setContentView(binding.getRoot());
         videoPlayerH264 = new VideoPlayer(this);
         videoPlayerH264.setIVideoParamsChanged(this);
@@ -149,6 +163,12 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
             // OSD
             SubMenu osd = popup.getMenu().addSubMenu("OSD");
+            String lockLabel = osdManager.isOSDLocked() ? "Unlock OSD" : "Lock OSD";
+            MenuItem lock = osd.add(lockLabel);
+            lock.setOnMenuItemClickListener(item -> {
+                osdManager.lockOSD(!osdManager.isOSDLocked());
+                return true;
+            });
             for (OSDElement element: osdManager.listOSDItems) {
                 MenuItem itm = osd.add(element.name);
                 itm.setCheckable(true);
@@ -160,8 +180,9 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 });
             }
 
-            // gs.key
-            MenuItem keyBtn = popup.getMenu().add("gs.key");
+            // WFB
+            SubMenu wfb = popup.getMenu().addSubMenu("WFB-NG");
+            MenuItem keyBtn = wfb.add("gs.key");
             keyBtn.setOnMenuItemClickListener(item -> {
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -170,10 +191,25 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 return true;
             });
 
-            String lockLabel = osdManager.isOSDLocked() ? "Unlock OSD" : "Lock OSD";
-            MenuItem lock = popup.getMenu().add(lockLabel);
-            lock.setOnMenuItemClickListener(item -> {
-                osdManager.lockOSD(!osdManager.isOSDLocked());
+            // recording
+            MenuItem dvrBtn = popup.getMenu().add(dvrFd == null ? "Start recording" : "Stop recording");
+            dvrBtn.setOnMenuItemClickListener(item -> {
+                if (dvrFd == null) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        // Permission is not granted
+                        ActivityCompat.requestPermissions(this,
+                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                REQUEST_WRITE_PERMISSION);
+                        return true;
+                    }
+                    Uri dvrUri = openDvrFile();
+                    if (dvrUri != null) {
+                        startDvr(dvrUri);
+                    }
+                } else {
+                    stopDvr();
+                }
                 return true;
             });
 
@@ -225,6 +261,54 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 binding.imgGSBattery.setImageResource(icon);
             }
         };
+    }
+
+    private Uri openDvrFile() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Use MediaStore to create the file in the Movies directory
+            ContentValues values = new ContentValues();
+
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
+            // Format the current date and time
+            String formattedNow = now.format(formatter);
+
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, "fpvue_dvr_"+formattedNow);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_MOVIES);
+            return getContentResolver().insert(MediaStore.Video.Media.getContentUri("external"), values);
+        } else {
+            // For Android 9 and below, use traditional file path
+            File moviesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+            if (!moviesDir.exists() && !moviesDir.mkdirs()) {
+                Toast.makeText(this, "Failed to create directory", Toast.LENGTH_SHORT).show();
+                return null;
+            }
+            //File newFile = new File(moviesDir, "fpvue_dvr.mp4");
+            // TODO return file descriptor
+        }
+        return null;
+    }
+
+    private void startDvr(Uri dvrUri) {
+        if (dvrFd != null) {
+           stopDvr();
+        }
+        try {
+            dvrFd = getContentResolver().openFileDescriptor(dvrUri, "rw");
+            currentPlayer().startDvr(dvrFd.getFd());
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to open dvr file ", e);
+            dvrFd = null;
+        }
+    }
+
+    private void stopDvr() {
+        if (dvrFd == null) {
+            return;
+        }
+        currentPlayer().stopDvr();
+        dvrFd = null;
     }
 
     @Override
@@ -328,6 +412,10 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             osdManager.restoreOSDConfig();
         }
         super.onResume();
+    }
+
+    protected VideoPlayer currentPlayer() {
+        return getCodec(this).equals("h265") ? videoPlayerH265 : videoPlayerH264;
     }
 
     public synchronized void startVideoPlayer() {

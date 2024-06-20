@@ -9,8 +9,14 @@
 #include "VideoDecoder.h"
 #include "UdpReceiver.h"
 #include "parser/H26XParser.h"
+#include "minimp4.h"
+#include <stdio.h>
+#include <fcntl.h>
+#include <fstream>
+#include <queue>
 
 class VideoPlayer{
+
 public:
     VideoPlayer(JNIEnv * env, jobject context);
     enum VIDEO_DATA_TYPE{RTP_H264,RAW_H264,RTP_H265,RAW_H265};
@@ -32,11 +38,12 @@ public:
      * Returns a string with the current configuration for debugging
      */
     std::string getInfoString()const;
+
+    void startDvr(JNIEnv *env,jint fd);
+    void stopDvr();
+
 private:
     void onNewNALU(const NALU& nalu);
-    void rtpToNalu(const uint8_t* data, const std::size_t data_length);
-    uint32_t in_nal_size = 0;
-    uint8_t* decodeRTPFrame(const uint8_t* rx_buffer, uint32_t rx_size, uint32_t header_size, uint8_t* nal_buffer, uint32_t* out_nal_size);
     //Assumptions: Max bitrate: 40 MBit/s, Max time to buffer: 100ms
     //5 MB should be plenty !
     static constexpr const size_t WANTED_UDP_RCVBUF_SIZE=1024*1024*5;
@@ -45,10 +52,46 @@ private:
     const std::string GROUND_RECORDING_DIRECTORY;
     JavaVM* javaVm=nullptr;
     H26XParser mParser;
+
+    // DVR attributes
+    int dvr_fd;
+    std::queue<NALU> naluQueue;
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool stopFlag = false;
+    std::thread processingThread;
+
+    void enqueueNALU(const NALU& nalu) {
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            naluQueue.push(nalu);
+        }
+        cv.notify_one();
+    }
+
+    void startProcessing() {
+        stopFlag = false;
+        processingThread = std::thread(&VideoPlayer::processQueue, this);
+    }
+
+    void stopProcessing() {
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            stopFlag = true;
+        }
+        cv.notify_all();
+        if (processingThread.joinable()) {
+            processingThread.join();
+        }
+    }
+
+    void processQueue();
+
 public:
     VideoDecoder videoDecoder;
     std::unique_ptr<UDPReceiver> mUDPReceiver;
     long nNALUsAtLastCall=0;
+
 public:
     DecodingInfo latestDecodingInfo{};
     std::atomic<bool> latestDecodingInfoChanged=false;
