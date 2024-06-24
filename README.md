@@ -12,6 +12,10 @@ The settings menu allows selecting a different key from your phone.
 Supported rtl8812au wifi adapter are listed [here](https://github.com/gehee/FPVue_android/blob/main/app/src/main/res/xml/usb_device_filter.xml).
 Feel free to send pull requests to add new supported wifi adapters hardware IDs.
 
+Now support saving a dvr of the video feed to `Files/Internal Storage/Movies/`
+
+
+
 ## Compatibility
 
 - arm64-v8a, armeabi-v7a android devices (including Meta Quest 2/3, non vr mode)
