@@ -2,7 +2,6 @@ package com.geehe.fpvue;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -14,9 +13,7 @@ import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
@@ -27,6 +24,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -65,8 +63,9 @@ import me.saket.cascade.CascadePopupMenuCheckable;
 // Most basic implementation of an activity that uses VideoNative to stream a video
 // Into an Android Surface View
 public class VideoActivity extends AppCompatActivity implements IVideoParamsChanged, WfbNGStatsChanged, MavlinkUpdate, SettingsChanged {
-    private static final int PICK_DOCUMENT_REQUEST_CODE = 1;
+    private static final int PICK_GSKEY_REQUEST_CODE = 1;
     private static final int REQUEST_WRITE_PERMISSION = 2;
+    private static final int PICK_DVR_REQUEST_CODE = 3;
 
     private ActivityVideoBinding binding;
     protected DecodingInfo mDecodingInfo;
@@ -187,7 +186,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("*/*");
-                startActivityForResult(intent, PICK_DOCUMENT_REQUEST_CODE);
+                startActivityForResult(intent, PICK_GSKEY_REQUEST_CODE);
                 return true;
             });
 
@@ -206,6 +205,10 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                     Uri dvrUri = openDvrFile();
                     if (dvrUri != null) {
                         startDvr(dvrUri);
+                    } else {
+                        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                        intent.addCategory(Intent.CATEGORY_DEFAULT);
+                        startActivityForResult(intent, PICK_DVR_REQUEST_CODE);
                     }
                 } else {
                     stopDvr();
@@ -264,23 +267,23 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     }
 
     private Uri openDvrFile() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Use MediaStore to create the file in the Movies directory
-            ContentValues values = new ContentValues();
-
-            LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
-            // Format the current date and time
-            String formattedNow = now.format(formatter);
-
-            values.put(MediaStore.MediaColumns.DISPLAY_NAME, "fpvue_dvr_"+formattedNow);
-            values.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4");
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_MOVIES);
-            return getContentResolver().insert(MediaStore.Video.Media.getContentUri("external"), values);
-        } else {
-            Toast.makeText(this, "Recording is not supported on this os version.", Toast.LENGTH_SHORT).show();
-        }
-        return null;
+            String dvrFolder = getSharedPreferences("general", Context.MODE_PRIVATE).getString("dvr_folder", "");
+            if (dvrFolder.isEmpty()) {
+                return null;
+            }
+            Uri uri =  Uri.parse(dvrFolder);
+            DocumentFile pickedDir = DocumentFile.fromTreeUri(this, uri);
+            if (pickedDir != null && pickedDir.canWrite()) {
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
+                // Format the current date and time
+                String formattedNow = now.format(formatter);
+                String filename = "fpvue_dvr_" + formattedNow + ".mp4";
+                DocumentFile newFile = pickedDir.createFile("video/mp4", filename);
+                Toast.makeText(this, "Recording to " + filename, Toast.LENGTH_SHORT).show();
+                return newFile.getUri();
+            }
+            return null;
     }
 
     private void startDvr(Uri dvrUri) {
@@ -307,8 +310,8 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_DOCUMENT_REQUEST_CODE && resultCode == RESULT_OK) {
-            if (data != null) {
+        if (requestCode == PICK_GSKEY_REQUEST_CODE && resultCode == RESULT_OK) {
+            if (data != null && data.getData() != null) {
                 Uri uri = data.getData();
                 Log.d(TAG, "Selected file " + uri);
                 try {
@@ -319,6 +322,22 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                     inputStream.close();
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to import gs.key from " + uri);
+                }
+            }
+        } else if (requestCode == PICK_DVR_REQUEST_CODE  && resultCode == RESULT_OK) {
+            // The result data contains a URI for the document or directory that
+            // the user selected.
+            Uri uri = null;
+            if (data != null && data.getData() != null) {
+                uri = data.getData();
+                // Perform operations on the document using its URI.
+                SharedPreferences prefs = this.getSharedPreferences("general", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("dvr_folder", uri.toString());
+                editor.apply();
+                Uri dvrUri = openDvrFile();
+                if (dvrUri != null) {
+                    startDvr(dvrUri);
                 }
             }
         }
