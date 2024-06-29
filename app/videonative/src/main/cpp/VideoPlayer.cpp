@@ -132,6 +132,7 @@ void VideoPlayer::start(JNIEnv *env,jobject androidContext, jstring codec) {
     const int VS_PROTOCOL = strcmp(codec_, "h265")==0 ? RTP_H265 : RTP_H264;
     env->ReleaseStringUTFChars(codec, codec_);
     const auto videoDataType=static_cast<VIDEO_DATA_TYPE>(VS_PROTOCOL);
+    mUDPReceiver.release();
     mUDPReceiver=std::make_unique<UDPReceiver>(javaVm, VS_PORT, "UdpReceiver", -16, [this,videoDataType](const uint8_t* data, size_t data_length) {
         onNewVideoData(data,data_length,videoDataType);
     }, WANTED_UDP_RCVBUF_SIZE);

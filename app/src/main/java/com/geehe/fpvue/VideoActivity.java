@@ -278,14 +278,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_MOVIES);
             return getContentResolver().insert(MediaStore.Video.Media.getContentUri("external"), values);
         } else {
-            // For Android 9 and below, use traditional file path
-            File moviesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
-            if (!moviesDir.exists() && !moviesDir.mkdirs()) {
-                Toast.makeText(this, "Failed to create directory", Toast.LENGTH_SHORT).show();
-                return null;
-            }
-            //File newFile = new File(moviesDir, "fpvue_dvr.mp4");
-            // TODO return file descriptor
+            Toast.makeText(this, "Recording is not supported on this os version.", Toast.LENGTH_SHORT).show();
         }
         return null;
     }

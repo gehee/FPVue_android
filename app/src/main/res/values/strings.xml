@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FPVue 0.18</string>
+    <string name="app_name">FPVue 0.18.1</string>
     <string-array name="codecs">
         <item>h265</item>
         <item>h264</item>

@@ -41,7 +41,7 @@ public class UsbManager extends BroadcastReceiver {
             if (detachedDevice == null ){
                 return;
             }
-            Log.d(TAG, "usb event detached: " + detachedDevice.getDeviceName());
+            Log.d(TAG, "usb event detached: " + detachedDevice.getVendorId() + "/" + detachedDevice.getProductId());
             activeWifiAdapters.removeIf(usbDevice -> usbDevice.getDeviceName().equals(detachedDevice.getDeviceName()));
             try {
                 wfbLink.stop(detachedDevice);
@@ -49,7 +49,10 @@ public class UsbManager extends BroadcastReceiver {
             }
         } else if (android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(intent.getAction())) {
             UsbDevice dev = intent.getParcelableExtra(android.hardware.usb.UsbManager.EXTRA_DEVICE);
-            Log.d(TAG, "usb event attached: " + dev.getDeviceName());
+            if (dev == null ){
+                return;
+            }
+            Log.d(TAG, "usb event attached: " + dev.getVendorId() + "/" + dev.getProductId());
             startAdapter(dev, VideoActivity.getChannel(context));
             activeWifiAdapters.add(dev);
         } else if (ACTION_USB_PERMISSION.equals(intent.getAction())) {
@@ -57,10 +60,35 @@ public class UsbManager extends BroadcastReceiver {
         }
     }
 
-    public synchronized void initWifiAdapters(){
+    public synchronized void initWifiAdapters() {
         activeWifiAdapters.clear();
         android.hardware.usb.UsbManager manager = (android.hardware.usb.UsbManager) context.getSystemService(Context.USB_SERVICE);
-        activeWifiAdapters.addAll(manager.getDeviceList().values());
+
+        List<UsbDeviceFilter> filters;
+        try {
+           filters = DeviceFilterXmlParser.parseXml(context, R.xml.usb_device_filter);
+        } catch (Exception e) {
+           e.printStackTrace();
+           return;
+        }
+        Log.d(TAG, "initWifiAdapters filters: " + filters);
+        Log.d(TAG, "initWifiAdapters devices: " + manager.getDeviceList().values());
+
+        for (UsbDevice dev :  manager.getDeviceList().values()) {
+            boolean allowed = false;
+            for (UsbDeviceFilter filter : filters) {
+                if (filter.productId != dev.getProductId() || filter.venderId != dev.getVendorId()) {
+                    allowed = true;
+                    break;
+                }
+            }
+            if (!allowed) {
+                continue;
+            }
+            Log.d(TAG, "Using device " + dev.getVendorId() + "/" + dev.getProductId());
+            activeWifiAdapters.add(dev);
+        }
+
         if (activeWifiAdapters.isEmpty()) {
             binding.tvMessage.setVisibility(View.VISIBLE);
             binding.tvMessage.setText( "No compatible wifi adapter found.");
@@ -91,10 +119,10 @@ public class UsbManager extends BroadcastReceiver {
             return false;
         }
         String name = dev.getDeviceName().split("/dev/bus/")[1];
-        if (binding.tvMessage.getText().toString().startsWith("Starting")) {
+        if (binding.tvMessage.getText().toString().startsWith("Starting") && !binding.tvMessage.getText().toString().endsWith(name)) {
             binding.tvMessage.setText(binding.tvMessage.getText()+ ", " + name);
         } else {
-            binding.tvMessage.setText( "Starting wfb-ng on channel " + wifiChannel+" with " + name);
+            binding.tvMessage.setText( "Starting wfb-ng on channel " + wifiChannel + " with " + name);
         }
         wfbLink.Run(wifiChannel, dev);
         return true;

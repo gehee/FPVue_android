@@ -69,7 +69,10 @@ public class WfbNgLink implements WfbNGStatsChanged{
             nativeStop(nativeWfbngLink, context, entry.getValue().getFileDescriptor());
         }
         for (Map.Entry<UsbDevice, UsbDeviceConnection> entry : linkConns.entrySet()) {
-            linkThreads.get(entry.getKey()).join();
+            Thread t = linkThreads.get(entry.getKey());
+            if (t != null) {
+                t.join();
+            }
         }
         linkThreads.clear();
     }
@@ -81,7 +84,10 @@ public class WfbNgLink implements WfbNGStatsChanged{
         }
         int fd = conn.getFileDescriptor();
         nativeStop(nativeWfbngLink, context, fd);
-        linkThreads.get(dev).join();
+        Thread t = linkThreads.get(dev);
+        if (t != null) {
+            t.join();
+        }
         linkThreads.remove(dev);
     }
 

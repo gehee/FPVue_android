@@ -50,7 +50,7 @@ public class VideoPlayer implements IVideoParamsChanged{
         nativeStart(nativeVideoPlayer,context, codec);
         //The timer initiates the callback(s), but if no data has changed they are not called (and the timer does almost no work)
         //TODO: proper queue, but how to do synchronization in java ndk ?!
-        timer=new Timer();
+        timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
