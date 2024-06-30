@@ -74,9 +74,8 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     private static final String TAG = "VideoActivity";
 
-    UsbManager usbManager;
+    WfbLinkManager wfbLinkManager;
     BroadcastReceiver batteryReceiver;
-    WfbNgLink wfbLink;
 
     VideoPlayer videoPlayerH264;
     VideoPlayer videoPlayerH265;
@@ -86,6 +85,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "lifecycle onCreate");
         super.onCreate(savedInstanceState);
         binding = ActivityVideoBinding.inflate(getLayoutInflater());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -93,10 +93,9 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         // Init wfb ng.
         setDefaultGsKey();
         copyGSKey();
-        wfbLink = new WfbNgLink(VideoActivity.this);
+        WfbNgLink wfbLink = new WfbNgLink(VideoActivity.this);
         wfbLink.SetWfbNGStatsChanged(VideoActivity.this);
-        usbManager = new UsbManager(this, binding, wfbLink);
-        usbManager.initWifiAdapters();
+        wfbLinkManager = new WfbLinkManager(this, binding, wfbLink);
 
         // Setup video players
         setContentView(binding.getRoot());
@@ -318,7 +317,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                     InputStream inputStream = getContentResolver().openInputStream(uri);
                     setGsKey(inputStream);
                     copyGSKey();
-                    wfbLink.refreshKey();
+                    wfbLinkManager.refreshKey();
                     inputStream.close();
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to import gs.key from " + uri);
@@ -380,20 +379,21 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         IntentFilter usbFilter = new IntentFilter();
         usbFilter.addAction(android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED);
         usbFilter.addAction(android.hardware.usb.UsbManager.ACTION_USB_DEVICE_DETACHED);
-        usbFilter.addAction(UsbManager.ACTION_USB_PERMISSION);
+        usbFilter.addAction(WfbLinkManager.ACTION_USB_PERMISSION);
         IntentFilter batFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+
         if (Build.VERSION.SDK_INT >= 33) {
-            registerReceiver(usbManager, usbFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(wfbLinkManager, usbFilter, Context.RECEIVER_NOT_EXPORTED);
             registerReceiver(batteryReceiver, batFilter, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(usbManager, usbFilter);
+            registerReceiver(wfbLinkManager, usbFilter);
             registerReceiver(batteryReceiver, batFilter);
         }
     }
 
     public void unregisterReceivers() {
         try {
-            unregisterReceiver(usbManager);
+            unregisterReceiver(wfbLinkManager);
         } catch(java.lang.IllegalArgumentException ignored) {}
         try {
             unregisterReceiver(batteryReceiver);
@@ -409,20 +409,24 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     protected void onStop() {
         MavlinkNative.nativeStop(this);
         unregisterReceivers();
-        usbManager.stopAdapters();
+        wfbLinkManager.stopAdapters();
         stopVideoPlayer();
         super.onStop();
     }
 
     @Override
     protected void onResume() {
-        // On resume can be called when a device is attached, make sure wfb is not running already.
-        if (!wfbLink.isRunning()){
-            registerReceivers();
-            startVideoPlayer();
-            usbManager.startAdapters(getChannel(this));
-            osdManager.restoreOSDConfig();
-        }
+        registerReceivers();
+
+        // On resume is called when the app is reopened, a device might have been plugged since the last time it started.
+        startVideoPlayer();
+
+        wfbLinkManager.setChannel(getChannel(this));
+        wfbLinkManager.refreshAdapters();
+
+        osdManager.restoreOSDConfig();
+
+        registerReceivers();
         super.onResume();
     }
 
@@ -469,8 +473,8 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt("wifi-channel", channel);
         editor.apply();
-        usbManager.stopAdapters();
-        usbManager.startAdapters(channel);
+        wfbLinkManager.stopAdapters();
+        wfbLinkManager.startAdapters(channel);
     }
 
     @Override

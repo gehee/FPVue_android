@@ -26,8 +26,8 @@ public class DeviceFilterXmlParser {
                     String vendorIdString = parser.getAttributeValue(null, "vendor-id");
                     String productIdString = parser.getAttributeValue(null, "product-id");
 
-                    int vendorId = Integer.parseInt(vendorIdString, 16); // Parse from hex string
-                    int productId = Integer.parseInt(productIdString, 16);
+                    int vendorId = Integer.parseInt(vendorIdString, 10);
+                    int productId = Integer.parseInt(productIdString, 10);
 
                     UsbDeviceFilter device = new UsbDeviceFilter(vendorId, productId);
                     devices.add(device);

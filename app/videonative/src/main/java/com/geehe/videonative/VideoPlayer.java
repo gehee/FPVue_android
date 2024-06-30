@@ -45,7 +45,7 @@ public class VideoPlayer implements IVideoParamsChanged{
         nativeSetVideoSurface(nativeVideoPlayer, surface);
     }
 
-    public void start(String codec){
+    public synchronized void start(String codec){
         verifyApplicationThread();
         nativeStart(nativeVideoPlayer,context, codec);
         //The timer initiates the callback(s), but if no data has changed they are not called (and the timer does almost no work)
@@ -59,7 +59,7 @@ public class VideoPlayer implements IVideoParamsChanged{
         },0,200);
     }
 
-    public void stop(){
+    public synchronized void stop(){
         if (timer == null) {
             return;
         }
@@ -67,6 +67,11 @@ public class VideoPlayer implements IVideoParamsChanged{
         timer.cancel();
         timer.purge();
         nativeStop(nativeVideoPlayer, context);
+        timer = null;
+    }
+
+    public boolean isRunning() {
+        return timer != null;
     }
 
     public void startDvr(int fd) {

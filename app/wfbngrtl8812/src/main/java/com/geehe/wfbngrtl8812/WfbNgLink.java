@@ -9,14 +9,12 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class WfbNgLink implements WfbNGStatsChanged{
+public class WfbNgLink implements WfbNGStatsChanged {
     // Load the 'Rtl8812au_Wfbng' library on application startup.
     static {
         System.loadLibrary("WfbngRtl8812");
@@ -51,7 +49,7 @@ public class WfbNgLink implements WfbNGStatsChanged{
         nativeRefreshKey(nativeWfbngLink);
     }
 
-    public synchronized void Run(int wifiChannel, UsbDevice usbDevice) {
+    public synchronized void start(int wifiChannel, UsbDevice usbDevice) {
         Log.d(TAG, "wfb-ng monitoring on " + usbDevice.getDeviceName() + " using wifi channel " + wifiChannel);
         UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         UsbDeviceConnection usbDeviceConnection = usbManager.openDevice(usbDevice);
@@ -61,7 +59,7 @@ public class WfbNgLink implements WfbNGStatsChanged{
         linkThreads.put(usbDevice, t);
         linkConns.put(usbDevice, usbDeviceConnection);
         linkThreads.get(usbDevice).start();
-        Log.d(TAG, "wfb-ng on "+ usbDevice.getDeviceName()+ " done.");
+        Log.d(TAG, "wfb-ng thread on "+ usbDevice.getDeviceName()+ " started.");
     }
 
     public synchronized void stopAll() throws InterruptedException {
@@ -73,6 +71,7 @@ public class WfbNgLink implements WfbNGStatsChanged{
             if (t != null) {
                 t.join();
             }
+            Log.d(TAG, "wfb-ng thread on "+ entry.getKey().getDeviceName()+ " done.");
         }
         linkThreads.clear();
     }
@@ -90,7 +89,6 @@ public class WfbNgLink implements WfbNGStatsChanged{
         }
         linkThreads.remove(dev);
     }
-
     public void SetWfbNGStatsChanged(final WfbNGStatsChanged callback){
         statsChanged=callback;
     }
