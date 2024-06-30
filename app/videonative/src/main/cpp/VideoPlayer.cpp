@@ -41,7 +41,7 @@ void VideoPlayer::processQueue() {
         while (true) {
             std::unique_lock<std::mutex> lock(mtx);
             cv.wait(lock, [this] { return !naluQueue.empty() || stopFlag; });
-            if (stopFlag && naluQueue.empty()) {
+            if (stopFlag) {
                 break;
             }
             if (!naluQueue.empty()) {
@@ -73,10 +73,7 @@ void VideoPlayer::processQueue() {
             fclose(fout);
             fout = NULL;
         }
-        if (dvr_fd > 0) {
-            close(dvr_fd);
-            dvr_fd = -1;
-        }
+        dvr_fd = -1;
         __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "dvr thread done");
     }
 

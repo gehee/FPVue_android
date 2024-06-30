@@ -60,8 +60,7 @@ import me.saket.cascade.CascadePopupMenuCheckable;
 // Into an Android Surface View
 public class VideoActivity extends AppCompatActivity implements IVideoParamsChanged, WfbNGStatsChanged, MavlinkUpdate, SettingsChanged {
     private static final int PICK_GSKEY_REQUEST_CODE = 1;
-    private static final int REQUEST_WRITE_PERMISSION = 2;
-    private static final int PICK_DVR_REQUEST_CODE = 3;
+    private static final int PICK_DVR_REQUEST_CODE = 2;
 
     private ActivityVideoBinding binding;
     protected DecodingInfo mDecodingInfo;
@@ -291,6 +290,11 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             return;
         }
         currentPlayer().stopDvr();
+        try {
+            dvrFd.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         dvrFd = null;
     }
 
