@@ -1,12 +1,10 @@
 package com.geehe.fpvue;
 
-import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.net.Uri;
@@ -25,8 +23,6 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.documentfile.provider.DocumentFile;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.geehe.fpvue.databinding.ActivityVideoBinding;
 import com.geehe.fpvue.osd.OSDElement;
@@ -193,14 +189,6 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             MenuItem dvrBtn = popup.getMenu().add(dvrFd == null ? "Start recording" : "Stop recording");
             dvrBtn.setOnMenuItemClickListener(item -> {
                 if (dvrFd == null) {
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            != PackageManager.PERMISSION_GRANTED) {
-                        // Permission is not granted
-                        ActivityCompat.requestPermissions(this,
-                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                REQUEST_WRITE_PERMISSION);
-                        return true;
-                    }
                     Uri dvrUri = openDvrFile();
                     if (dvrUri != null) {
                         startDvr(dvrUri);
@@ -266,7 +254,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     }
 
     private Uri openDvrFile() {
-            String dvrFolder = getSharedPreferences("general", Context.MODE_PRIVATE).getString("dvr_folder", "");
+            String dvrFolder = getSharedPreferences("general", Context.MODE_PRIVATE).getString("dvr_folder_", "");
             if (dvrFolder.isEmpty()) {
                 return null;
             }
@@ -332,7 +320,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 // Perform operations on the document using its URI.
                 SharedPreferences prefs = this.getSharedPreferences("general", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("dvr_folder", uri.toString());
+                editor.putString("dvr_folder_", uri.toString());
                 editor.apply();
                 Uri dvrUri = openDvrFile();
                 if (dvrUri != null) {
