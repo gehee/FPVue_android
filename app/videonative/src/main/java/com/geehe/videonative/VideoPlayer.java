@@ -30,6 +30,7 @@ public class VideoPlayer implements IVideoParamsChanged{
     // This timer is used to then 'call back' the IVideoParamsChanged
     private Timer timer;
 
+
     // Setup as much as possible without creating the decoder
     public VideoPlayer(final AppCompatActivity parent){
         this.context=parent;
@@ -74,8 +75,8 @@ public class VideoPlayer implements IVideoParamsChanged{
         return timer != null;
     }
 
-    public void startDvr(int fd) {
-        nativeStartDvr(nativeVideoPlayer, fd);
+    public void startDvr(int fd, boolean enabled_fmp4) {
+        nativeStartDvr(nativeVideoPlayer, fd, enabled_fmp4 ? 1 : 0);
     }
 
     public void stopDvr() {
@@ -187,7 +188,7 @@ public class VideoPlayer implements IVideoParamsChanged{
     public static native void nativeStop(long nativeInstance,Context context);
     public static native void nativeSetVideoSurface(long nativeInstance, Surface surface);
 
-    public static native void nativeStartDvr(long nativeInstance, int fd);
+    public static native void nativeStartDvr(long nativeInstance, int fd, int fmp4_enabled);
     public static native void nativeStopDvr(long nativeInstance);
 
     //get members or other information. Some might be only usable in between (nativeStart <-> nativeStop)

@@ -34,7 +34,7 @@ static int write_callback(int64_t offset, const void *buffer, size_t size, void 
 
 void VideoPlayer::processQueue() {
         ::FILE * fout = fdopen(dvr_fd, "wb");
-        MP4E_mux_t *mux = MP4E_open(0 /*sequential_mode*/, 0 /*fragmentation_mode*/, fout, write_callback);
+        MP4E_mux_t *mux = MP4E_open(0 /*sequential_mode*/, dvr_mp4_fragmentation, fout, write_callback);
         mp4_h26x_writer_t mp4wr;
         float framerate = 0;
 
@@ -157,9 +157,9 @@ std::string VideoPlayer::getInfoString()const{
 }
 
 
-void VideoPlayer::startDvr(JNIEnv *env, jint fd) {
+void VideoPlayer::startDvr(JNIEnv *env, jint fd, jint dvr_fmp4_enabled) {
     dvr_fd = dup(fd);
-
+    dvr_mp4_fragmentation = dvr_fmp4_enabled;
     __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "dvr_fd=%d", dvr_fd);
     if (dvr_fd == -1) {
         __android_log_print(ANDROID_LOG_DEBUG, "com.geehe.fpvue", "Failed to duplicate dvr file descriptor");
@@ -171,7 +171,6 @@ void VideoPlayer::startDvr(JNIEnv *env, jint fd) {
 void VideoPlayer::stopDvr() {
     stopProcessing();
 }
-
 
 //----------------------------------------------------JAVA bindings---------------------------------------------------------------
 #define JNI_METHOD(return_type, method_name) \
@@ -288,9 +287,10 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_geehe_videonative_VideoPlayer_nativeStartDvr(JNIEnv *env, jclass clazz,
                                                         jlong native_instance,
-                                                        jint fd) {
-    native(native_instance)->startDvr(env, fd);
+                                                        jint fd, jint fmp4_enabled) {
+    native(native_instance)->startDvr(env, fd, fmp4_enabled);
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_geehe_videonative_VideoPlayer_nativeStopDvr(JNIEnv *env, jclass clazz, jlong native_instance) {

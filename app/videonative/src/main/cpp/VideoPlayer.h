@@ -39,7 +39,7 @@ public:
      */
     std::string getInfoString()const;
 
-    void startDvr(JNIEnv *env,jint fd);
+    void startDvr(JNIEnv *env,jint fd, jint fmp4_enabled);
     void stopDvr();
 
 private:
@@ -60,6 +60,7 @@ private:
     std::condition_variable cv;
     bool stopFlag = false;
     std::thread processingThread;
+    int dvr_mp4_fragmentation = 0;
 
     void enqueueNALU(const NALU& nalu) {
         {

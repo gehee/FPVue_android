@@ -78,6 +78,8 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     private ParcelFileDescriptor dvrFd = null;
 
+    private boolean enableDvrFmp4;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "lifecycle onCreate");
@@ -185,7 +187,8 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
             });
 
             // recording
-            MenuItem dvrBtn = popup.getMenu().add(dvrFd == null ? "Start recording" : "Stop recording");
+            SubMenu recording = popup.getMenu().addSubMenu("Recording");
+            MenuItem dvrBtn = recording.add(dvrFd == null ? "Start" : "Stop");
             dvrBtn.setOnMenuItemClickListener(item -> {
                 if (dvrFd == null) {
                     Uri dvrUri = openDvrFile();
@@ -199,6 +202,15 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 } else {
                     stopDvr();
                 }
+                return true;
+            });
+            MenuItem fmp4 = recording.add("FMP4");
+            fmp4.setCheckable(true);
+            fmp4.setChecked(getDvrfMP4());
+            fmp4.setOnMenuItemClickListener(item -> {
+                boolean enabled = getDvrfMP4();
+                item.setChecked(!enabled);
+                setDvrfMP4(!enabled);
                 return true;
             });
 
@@ -278,7 +290,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         }
         try {
             dvrFd = getContentResolver().openFileDescriptor(dvrUri, "rw");
-            currentPlayer().startDvr(dvrFd.getFd());
+            currentPlayer().startDvr(dvrFd.getFd(), enableDvrFmp4);
         } catch (IOException e) {
             Log.e(TAG, "Failed to open dvr file ", e);
             dvrFd = null;
@@ -364,6 +376,17 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         SharedPreferences prefs = this.getSharedPreferences("general", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString("gs.key", Base64.encodeToString(result.toByteArray(), Base64.DEFAULT));
+        editor.apply();
+    }
+
+    public boolean getDvrfMP4() {
+        return getSharedPreferences("general", Context.MODE_PRIVATE).getBoolean("dvr_fmp4", true);
+    }
+
+    public void setDvrfMP4(boolean enabled) {
+        SharedPreferences prefs = this.getSharedPreferences("general", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("dvr_fmp4", enabled);
         editor.apply();
     }
 
