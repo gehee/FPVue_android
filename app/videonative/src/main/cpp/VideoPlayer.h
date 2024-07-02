@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <queue>
+#include "time_util.h"
 
 class VideoPlayer{
 
@@ -42,6 +43,10 @@ public:
     void startDvr(JNIEnv *env,jint fd, jint fmp4_enabled);
     void stopDvr();
 
+    bool isRecording() {
+        return (get_time_ms() - last_dvr_write) <= 500;
+    }
+
 private:
     void onNewNALU(const NALU& nalu);
     //Assumptions: Max bitrate: 40 MBit/s, Max time to buffer: 100ms
@@ -61,6 +66,7 @@ private:
     bool stopFlag = false;
     std::thread processingThread;
     int dvr_mp4_fragmentation = 0;
+    uint64_t last_dvr_write = 0;
 
     void enqueueNALU(const NALU& nalu) {
         {

@@ -96,6 +96,23 @@
         </com.geehe.fpvue.osd.MovableLayout>
 
         <com.geehe.fpvue.osd.MovableLayout
+            android:id="@+id/itemRecIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <ImageView
+                android:id="@+id/imgRecIndicator"
+                android:layout_width="16dp"
+                android:layout_height="38dp"
+                android:src="@drawable/baseline_fiber_manual_record_24"
+                android:visibility="invisible"/>
+
+        </com.geehe.fpvue.osd.MovableLayout>
+
+        <com.geehe.fpvue.osd.MovableLayout
             android:id="@+id/itemLinkStatusChart"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

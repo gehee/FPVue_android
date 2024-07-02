@@ -7,7 +7,6 @@
 #include <android/native_window_jni.h>
 #include <android/asset_manager_jni.h>
 #include <android/log.h>
-#include "time_util.h"
 #include <fstream>
 
 VideoPlayer::VideoPlayer(JNIEnv* env, jobject context) :
@@ -39,6 +38,7 @@ void VideoPlayer::processQueue() {
         float framerate = 0;
 
         while (true) {
+            last_dvr_write = get_time_ms();
             std::unique_lock<std::mutex> lock(mtx);
             cv.wait(lock, [this] { return !naluQueue.empty() || stopFlag; });
             if (stopFlag) {
@@ -295,4 +295,11 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_geehe_videonative_VideoPlayer_nativeStopDvr(JNIEnv *env, jclass clazz, jlong native_instance) {
     native(native_instance)->stopDvr();
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_geehe_videonative_VideoPlayer_nativeIsRecording(JNIEnv *env, jclass clazz,
+                                                         jlong native_instance) {
+    return native(native_instance)->isRecording();
 }

@@ -78,7 +78,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     private ParcelFileDescriptor dvrFd = null;
 
-    private boolean enableDvrFmp4;
+    private  Timer dvrIconTimer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -186,7 +186,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 return true;
             });
 
-            // recording
+            // Recording
             SubMenu recording = popup.getMenu().addSubMenu("Recording");
             MenuItem dvrBtn = recording.add(dvrFd == null ? "Start" : "Stop");
             dvrBtn.setOnMenuItemClickListener(item -> {
@@ -204,7 +204,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
                 }
                 return true;
             });
-            MenuItem fmp4 = recording.add("FMP4");
+            MenuItem fmp4 = recording.add("fMP4");
             fmp4.setCheckable(true);
             fmp4.setChecked(getDvrfMP4());
             fmp4.setOnMenuItemClickListener(item -> {
@@ -290,18 +290,34 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         }
         try {
             dvrFd = getContentResolver().openFileDescriptor(dvrUri, "rw");
-            currentPlayer().startDvr(dvrFd.getFd(), enableDvrFmp4);
+            currentPlayer().startDvr(dvrFd.getFd(), getDvrfMP4());
         } catch (IOException e) {
             Log.e(TAG, "Failed to open dvr file ", e);
             dvrFd = null;
         }
+        dvrIconTimer = new Timer();
+        dvrIconTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        binding.imgRecIndicator.setVisibility(binding.imgRecIndicator.getVisibility() == View.VISIBLE ? View.INVISIBLE : View.VISIBLE);
+                    }
+                });
+            }
+        },0,1000);
     }
 
     private void stopDvr() {
         if (dvrFd == null) {
             return;
         }
+        binding.imgRecIndicator.setVisibility(View.INVISIBLE);
         currentPlayer().stopDvr();
+        dvrIconTimer.cancel();
+        dvrIconTimer.purge();
+        dvrIconTimer = null;
         try {
             dvrFd.close();
         } catch (IOException e) {

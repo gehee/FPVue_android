@@ -101,6 +101,7 @@ public class OSDManager  {
         listOSDItems.add(new OSDElement("Longitude", binding.itemLon));
         listOSDItems.add(new OSDElement("Pitch", binding.itemPitch));
         listOSDItems.add(new OSDElement("RC Link", binding.itemRCLink));
+        listOSDItems.add(new OSDElement("Recording Indicator", binding.itemRecIndicator));
         listOSDItems.add(new OSDElement("Roll", binding.itemRoll));
         listOSDItems.add(new OSDElement("Satellites", binding.itemSats));
         listOSDItems.add(new OSDElement("Status", binding.itemStatus));

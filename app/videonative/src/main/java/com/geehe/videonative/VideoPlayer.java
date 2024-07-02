@@ -190,6 +190,7 @@ public class VideoPlayer implements IVideoParamsChanged{
 
     public static native void nativeStartDvr(long nativeInstance, int fd, int fmp4_enabled);
     public static native void nativeStopDvr(long nativeInstance);
+    public static native boolean nativeIsRecording(long nativeInstance);
 
     //get members or other information. Some might be only usable in between (nativeStart <-> nativeStop)
     public static native String getVideoInfoString(long nativeInstance);
