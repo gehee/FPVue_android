@@ -1,5 +1,10 @@
 # FPVue_android
 
+> [!IMPORTANT]
+> August 2024: Unfortunately, this repository is now in an unmaintained state.
+> I don't have the time to maitain it like I would like to and there was not enough interest from external developers to contribute to it.
+> Feel free to fork it and take over but for now it will stay as is.
+
 FPVue Android is an app packaging multiple pieces together to decode an H264/H265 video feed broadcast by wfb-ng over the air.
 
 - [devourer](https://github.com/openipc/devourer): userspace rtl8812au driver initially created by [buldo](https://github.com/buldo) and converted to C by [josephnef](https://github.com/josephnef) .
